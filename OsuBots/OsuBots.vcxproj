@@ -147,16 +147,25 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Beatmap.h" />
+    <ClInclude Include="Functions.h" />
+    <ClInclude Include="globalStructs.h" />
+    <ClInclude Include="HitObject.h" />
+    <ClInclude Include="Input.h" />
     <ClInclude Include="OsuBot.h" />
     <ClInclude Include="ProcessTools.h" />
     <ClInclude Include="SigScanner.h" />
+    <ClInclude Include="TimingPoint.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Beatmap.cpp" />
+    <ClCompile Include="Functions.cpp" />
+    <ClCompile Include="HitObject.cpp" />
+    <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="OsuBot.cpp" />
     <ClCompile Include="ProcessTools.cpp" />
     <ClCompile Include="SigScanner.cpp" />
+    <ClCompile Include="TimingPoint.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

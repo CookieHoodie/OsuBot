@@ -14,7 +14,8 @@ using namespace std;
 //const string fileName = "Knife Party & Tom Morello - Battle Sirens (RIOT Remix) (Marmowka) [Extra].osu";
 //const string fileName = "YUC'e - Future Candy (Nathan) [Sugar Rush].osu";
 //const string fileName = "I SEE MONSTAS - Holdin On (Skrillex and Nero Remix) (Sotarks) [Hobbes2's Extreme].osu";
-const string fileName = "Sota Fujimori - polygon (Kaifin) [Lolirii's Collab Expert].osu";
+//const string fileName = "Sota Fujimori - polygon (Kaifin) [Lolirii's Collab Expert].osu";
+const string fileName = "xi - Glorious Crown (Monstrata) [FOUR DIMENSIONS].osu";
 
 int main() {
 	wchar_t* processName = L"osu!.exe";

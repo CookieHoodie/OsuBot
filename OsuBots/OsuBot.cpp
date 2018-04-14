@@ -9,10 +9,6 @@ const unsigned char OsuBot::PAUSE_SIGNAL_SIG[] = { 0x75, 0x26, 0xDD, 0x05 };
 const char* OsuBot::PAUSE_SIGNAL_MASK = "xxxx";
 const int OsuBot::PAUSE_SIGNAL_SIG_OFFSET = -5;
 
-// Change these constants to suit your keys
-const char OsuBot::LEFT_KEY = 'q';
-const char OsuBot::RIGHT_KEY = 'w';
-
 // -----------------------------------Constructor & Destructor---------------------------------------
 OsuBot::OsuBot(wchar_t* processName)
 {
@@ -34,7 +30,7 @@ OsuBot::OsuBot(wchar_t* processName)
 		// seeding for random numbers
 		srand(time(NULL));
 		cout << "-----------------Initialization done!-----------------" << endl << endl;
-		
+
 	}
 	else {
 		throw OsuBotException("Failed to get processID. Make sure processName given is correct!");
@@ -96,17 +92,6 @@ int OsuBot::getPauseSignal() {
 }
 
 // -------------------------------------------Gameplay related functions----------------------------------------
-inline void OsuBot::sentKeyInput(char key, bool pressed) {
-	// send key press to screen
-	// to release the key, set pressed = false
-	INPUT key_press = { 0 };
-	key_press.type = INPUT_KEYBOARD;
-	key_press.ki.wVk = VkKeyScanEx(key, GetKeyboardLayout(NULL)) & 0xFF;
-	key_press.ki.wScan = 0;
-	key_press.ki.dwExtraInfo = 0;
-	key_press.ki.dwFlags = (pressed ? 0 : KEYEVENTF_KEYUP);
-	SendInput(1, &key_press, sizeof INPUT);
-}
 
 void OsuBot::setCursorStartPoints() { // TODO: set this in thread and run in background to detect sizechange 
 	RECT rect;
@@ -124,7 +109,7 @@ void OsuBot::setCursorStartPoints() { // TODO: set this in thread and run in bac
 
 	int screenWidth = x;
 	int screenHeight = y;
-	
+
 	// some neccessary adjustment to screenSize ?
 	if (screenWidth * 3 > screenHeight * 4) {
 		screenWidth = screenHeight * 4 / 3;
@@ -183,53 +168,53 @@ void OsuBot::modRelax(Beatmap beatmap) {
 			}
 		}
 
-		if (hitObject.type == TypeE::circle) {
+		if (hitObject.type == HitObject::TypeE::circle) {
 			if (leftKeysTurn) {
-				(this)->sentKeyInput(OsuBot::LEFT_KEY, true); // press left key
+				Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
 				Sleep(rand() % 5 + 10); // sleep for random period of time between 10ms to 15ms
-				(this)->sentKeyInput(OsuBot::LEFT_KEY, false); // release left key
+				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
-				(this)->sentKeyInput(OsuBot::RIGHT_KEY, true); // press right key
+				Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
 				Sleep(rand() % 5 + 10); // sleep for random period of time between 10ms to 15ms
-				(this)->sentKeyInput(OsuBot::RIGHT_KEY, false); // release right key
+				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
 		}
-		else if (hitObject.type == TypeE::slider) {
+		else if (hitObject.type == HitObject::TypeE::slider) {
 			if (leftKeysTurn) {
-				(this)->sentKeyInput(OsuBot::LEFT_KEY, true); // press left key
+				Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
 				Sleep(hitObject.sliderDuration + (rand() % 10 + 5)); //sleep for random period of time between 5ms to 15ms after sliderDuration
-				(this)->sentKeyInput(OsuBot::LEFT_KEY, false); // release left key
+				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
-				(this)->sentKeyInput(OsuBot::RIGHT_KEY, true); // press right key
+				Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
 				Sleep(hitObject.sliderDuration + (rand() % 10 + 5)); //sleep for random period of time between 5ms to 15ms after sliderDuration
-				(this)->sentKeyInput(OsuBot::RIGHT_KEY, false); // release right key
+				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
 		}
-		else if (hitObject.type == TypeE::spinner) {
+		else if (hitObject.type == HitObject::TypeE::spinner) {
 			if (leftKeysTurn) {
-				(this)->sentKeyInput(OsuBot::LEFT_KEY, true); // press left key
+				Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
 				Sleep(hitObject.spinnerEndTime - hitObject.time + (rand() % 9)); // sleep min till spinner ends, max till endTime + 8ms
-				(this)->sentKeyInput(OsuBot::LEFT_KEY, false); // release left key
+				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
-				(this)->sentKeyInput(OsuBot::RIGHT_KEY, true); // press right key
+				Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
 				Sleep(hitObject.spinnerEndTime - hitObject.time + (rand() % 9)); // sleep min till spinner ends, max till endTime + 10ms
-				(this)->sentKeyInput(OsuBot::RIGHT_KEY, false); // release right key
+				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
 		}
 	}
 
 	// release both key to prevent unwanted behaviour
-	(this)->sentKeyInput(OsuBot::LEFT_KEY, false);
-	(this)->sentKeyInput(OsuBot::RIGHT_KEY, false);
+	Input::sentKeyInput(Input::LEFT_KEY, false);
+	Input::sentKeyInput(Input::RIGHT_KEY, false);
 }
 
 // ---------------------------------------Testing area, delete when finish----------------------------------
@@ -243,9 +228,9 @@ void OsuBot::testTime() {
 void OsuBot::loadBeatmap(string fileName) {
 	Beatmap b = Beatmap(fileName);
 	if (b.allSet) {
-		cout << "Starting: "<< b.fileName << endl;
+		cout << "Starting: " << b.fileName << endl;
 		(this)->modRelax(b);
-		cout << "Ending: "<< b.fileName << endl;
+		cout << "Ending: " << b.fileName << endl;
 		//bool leftKeysTurn = true;
 		//bool alternate = false;
 		//for (auto hitObject : b.HitObjects) {
@@ -331,7 +316,7 @@ void OsuBot::loadBeatmap(string fileName) {
 	else {
 		throw OsuBotException("Error loading beatmap: " + b.fileName);
 	}
-	
+
 
 	// get cursorPOs
 	// determine if in the radius
@@ -340,37 +325,37 @@ void OsuBot::loadBeatmap(string fileName) {
 	// determine endtime and unpressed at end time
 
 	/*SliderMultiplier(Decimal) specifies the multiplier of the slider velocity.
-		The velocity at slider multiplier = 1 is 100 osu!pixels per beat.A slider multiplier of 2 would yield a velocity of 200 osu!pixels per beat.
-		The default slider multiplier is 1.4 when the property is omitted.*/
-	
-	
+	The velocity at slider multiplier = 1 is 100 osu!pixels per beat.A slider multiplier of 2 would yield a velocity of 200 osu!pixels per beat.
+	The default slider multiplier is 1.4 when the property is omitted.*/
+
+
 }
 
 // beta version 
 void OsuBot::start() {
-	while (true) {
-		if (ProcessTools::getWindowTextString((this)->windowHandle) != "osu!" && (this)->getCurrentAudioTime() == 0) {
-			Beatmap b = Beatmap((this)->getFormattedWindowTitle(ProcessTools::getWindowTextString((this)->windowHandle)));
-			cout << "Starting " << b.fileName << endl;
-			bool alternate = false;
-			for (auto hitObject : b.HitObjects) {
-				while ((this)->getCurrentAudioTime() < hitObject.time - 3) {}
-				if (alternate) {
-					(this)->sentKeyInput('w', false);
-					(this)->sentKeyInput('w', true);
-					alternate = false;
-				}
-				else {
-					(this)->sentKeyInput('w', false);
-					(this)->sentKeyInput('q', true);
-					alternate = true;
-				}
-			}
-			(this)->sentKeyInput('w', false);
-			(this)->sentKeyInput('q', false);
-			cout << "Ending "<< b.fileName << endl;
-		}
+	/*while (true) {
+	if (ProcessTools::getWindowTextString((this)->windowHandle) != "osu!" && (this)->getCurrentAudioTime() == 0) {
+	Beatmap b = Beatmap((this)->getFormattedWindowTitle(ProcessTools::getWindowTextString((this)->windowHandle)));
+	cout << "Starting " << b.fileName << endl;
+	bool alternate = false;
+	for (auto hitObject : b.HitObjects) {
+	while ((this)->getCurrentAudioTime() < hitObject.time - 3) {}
+	if (alternate) {
+	(this)->sentKeyInput('w', false);
+	(this)->sentKeyInput('w', true);
+	alternate = false;
 	}
+	else {
+	(this)->sentKeyInput('w', false);
+	(this)->sentKeyInput('q', true);
+	alternate = true;
+	}
+	}
+	(this)->sentKeyInput('w', false);
+	(this)->sentKeyInput('q', false);
+	cout << "Ending " << b.fileName << endl;
+	}
+	}*/
 }
 
 string OsuBot::getFormattedWindowTitle(string windowTitle) { // window title ONLY! if given full .osu file this won't work
