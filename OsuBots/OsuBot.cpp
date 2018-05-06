@@ -12,29 +12,45 @@ const int OsuBot::PAUSE_SIGNAL_SIG_OFFSET = -5;
 // -----------------------------------Constructor & Destructor---------------------------------------
 OsuBot::OsuBot(wchar_t* processName)
 {
+	auto t_start = chrono::high_resolution_clock::now();
 	cout << "-----------------Initializing-----------------" << endl;
-	cout << "**It's assumed that all handles will be opened successfully. No error will be thrown and the bot might behave weridly if they fail." << endl;
 	cout << "Getting processID..." << endl;
 	(this)->processID = ProcessTools::getProcessID(processName);
 	if ((this)->processIsOpen()) {
+		cout << "Start parsing data from osu!.db in separate thread..." << endl;
+		thread osuDbThread(&OsuDbParser::startParsingData, &(this)->osuDbMin, OSUROOTPATH + "osu!.db", false);
 		cout << "Storing process handle..." << endl;
 		(this)->osuHandle = OpenProcess(PROCESS_ALL_ACCESS, false, (this)->processID);
+		if ((this)->osuHandle == NULL) { throw OsuBotException("Failed to get osuHandle."); }
 		cout << "Storing window handle..." << endl;
 		(this)->windowHandle = ProcessTools::getWindowHandle((this)->processID);
+		cout << "Storing window title Handle..." << endl;
+		(this)->windowTitleHandle = ProcessTools::getWindowTitleHandle("osu!");
+		if ((this)->windowTitleHandle == NULL) { 
+			cout << "Failed to get window title handle. Please make sure you aren't running any map. Retrying..." << endl;
+			do {
+				Sleep(1500);
+				(this)->windowTitleHandle = ProcessTools::getWindowTitleHandle("osu!");
+			} while ((this)->windowTitleHandle == NULL);
+		}
+		if ((this)->windowHandle == 0) { throw OsuBotException("Failed to get windowHandle."); }
 		cout << "Setting data needed for cursor position..." << endl;
 		(this)->setCursorStartPoints();
 		cout << "Storing currentAudioTimeAddress... (This might take a while)" << endl;
 		(this)->currentAudioTimeAddress = (this)->getCurrentAudioTimeAddress();
 		cout << "Storing pauseSignalAddress..." << endl;
 		(this)->pauseSignalAddress = (this)->currentAudioTimeAddress + 0x24;
+		cout << "Waiting osuDbThread to join..." << endl;
+		osuDbThread.join();
 		// seeding for random numbers
 		srand(time(NULL));
-		cout << "-----------------Initialization done!-----------------" << endl << endl;
-
+		cout << "-----------------Initialization done!-----------------"  << "Time taken: " << roundf(chrono::duration<float>(chrono::high_resolution_clock::now() - t_start).count() * 100) / 100 << "s" <<endl << endl;
 	}
 	else {
-		throw OsuBotException("Failed to get processID. Make sure processName given is correct!");
+		throw OsuBotException("Failed to get processID. Make sure the program is running!");
 	}
+
+	// TODO: use same variable for Osudb beatmap
 }
 
 OsuBot::~OsuBot()
@@ -91,6 +107,17 @@ int OsuBot::getPauseSignal() {
 	return pauseSignal;
 }
 
+// threading only
+void OsuBot::updateIsPlaying() {
+	(this)->isPlaying = true;
+	while (true) {
+		if (ProcessTools::getWindowTextString((this)->windowTitleHandle) == "osu!") {
+			(this)->isPlaying = false;
+			return;
+		}
+		Sleep(100);
+	}
+}
 // -------------------------------------------Gameplay related functions----------------------------------------
 
 void OsuBot::setCursorStartPoints() { // TODO: set this in thread and run in background to detect sizechange 
@@ -158,12 +185,13 @@ POINT OsuBot::getScaledPoints(int x, int y) {
 
 // -------------------------------------------Mods-------------------------------------------------
 void OsuBot::modRelax(Beatmap beatmap) {
+	if ((this)->isPlaying == false) { return; }
 	bool leftKeysTurn = true;
 	for (auto hitObject : beatmap.HitObjects) {
 		// loop for waiting till timing to press comes
 		while (true) {
-			int time = (this)->getCurrentAudioTime();
-			if ((time > hitObject.time - beatmap.timeRange300)) {
+			if ((this)->isPlaying == false) { return; }
+			if (((this)->getCurrentAudioTime() > hitObject.time - beatmap.timeRange300)) {
 				break;
 			}
 		}
@@ -217,151 +245,224 @@ void OsuBot::modRelax(Beatmap beatmap) {
 	Input::sentKeyInput(Input::RIGHT_KEY, false);
 }
 
+void OsuBot::modAutoPilot(Beatmap beatmap) { 
+	if ((this)->isPlaying == false) { return; }
+	POINT center = (this)->getScaledPoints(256, 192); // 256, 192 is always the center of osu virtual screen
+											 
+	// move to first hitObject when the beatmap starts
+	HitObject firstHitObject = beatmap.HitObjects.front();
+	// "-300" and "250" following are the preset adjustments as to when the cursor should move
+	while ((this)->getCurrentAudioTime() < firstHitObject.time - 300) {
+		if ((this)->isPlaying == false) { return; }
+	}
+	POINT startPoint = (this)->getScaledPoints(firstHitObject.x, firstHitObject.y);
+	// determine current cursor position and move from there to the firstHitObject
+	POINT currentCursorPos;
+	GetCursorPos(&currentCursorPos);
+	Input::circleLinearMove(currentCursorPos, startPoint, 250);
+
+	// starting of first to last hitObject
+	for (int i = 1; i < beatmap.HitObjects.size(); i++) {
+		if ((this)->isPlaying == false) { return; }
+		HitObject currentHitObject = beatmap.HitObjects.at(i - 1);
+		HitObject nextHitObject = beatmap.HitObjects.at(i);
+		POINT currentPoint = (this)->getScaledPoints(currentHitObject.x, currentHitObject.y);
+		POINT nextPoint = (this)->getScaledPoints(nextHitObject.x, nextHitObject.y);
+		// at this point, the cursor is already on the hitObject.
+		// so, to allow for longer range of hit time, wait until the time exceeds the time range of 300 points, then move
+		while ((this)->getCurrentAudioTime() < currentHitObject.time + beatmap.timeRange300 - 3) {
+			if ((this)->isPlaying == false) { return; }
+		}
+
+		if (currentHitObject.type == HitObject::TypeE::slider) {
+			// move slider regardless of type and after reaching the slider end, move linearly to next hitObject
+			// the duration of moving linearly is divide by 2 to reduce latency and also improve readability
+			POINT endPoint = Input::sliderMove(currentHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
+			Input::circleLinearMove(endPoint, nextPoint, (nextHitObject.time - currentHitObject.time - currentHitObject.sliderDuration) / 2);
+			
+		}
+		else if (currentHitObject.type == HitObject::TypeE::spinner) {
+			POINT endPoint = Input::spinnerMove(center, currentHitObject.spinnerEndTime - currentHitObject.time);
+			// same reason as above
+			Input::circleLinearMove(endPoint, nextPoint, (nextHitObject.time - currentHitObject.spinnerEndTime) / 2);
+		}
+		else { // circle
+			Input::circleLinearMove(currentPoint, nextPoint, (nextHitObject.time - currentHitObject.time) / 2);
+		}
+	}
+
+	// play last hitObject as it is not played in the loop (if it's circle then it's already done)
+	HitObject lastHitObject = beatmap.HitObjects.back();
+	while ((this)->getCurrentAudioTime() < lastHitObject.time + beatmap.timeRange300 - 3) {
+		if ((this)->isPlaying == false) { return; }
+	}
+	if (lastHitObject.type == HitObject::TypeE::slider) {
+		Input::sliderMove(lastHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
+	}
+	else if (lastHitObject.type == HitObject::TypeE::spinner) {
+		POINT center = (this)->getScaledPoints(256, 192);
+		Input::spinnerMove(center, lastHitObject.spinnerEndTime - lastHitObject.time);
+	}
+}
+
+void OsuBot::modAuto(Beatmap beatmap) { 
+	if ((this)->isPlaying == false) { return; }
+	POINT center = (this)->getScaledPoints(256, 192); // 256, 192 is always the center of osu virtual screen
+	bool leftKeysTurn = true;
+
+	// move to first hitObject when the beatmap starts
+	HitObject firstHitObject = beatmap.HitObjects.front();
+	// "-300" and "250" following are the preset adjustments as to when the cursor should move
+	while ((this)->getCurrentAudioTime() < firstHitObject.time - 300) {
+		if ((this)->isPlaying == false) { return; }
+	}
+	POINT startPoint = (this)->getScaledPoints(firstHitObject.x, firstHitObject.y);
+	// determine current cursor position and move from there to the firstHitObject
+	POINT currentCursorPos;
+	GetCursorPos(&currentCursorPos);
+	Input::circleLinearMove(currentCursorPos, startPoint, 250);
+	
+	// starting of first to last hitObject
+	for (int i = 1; i < beatmap.HitObjects.size(); i++) {
+		if ((this)->isPlaying == false) { return; }
+		HitObject currentHitObject = beatmap.HitObjects.at(i - 1);
+		HitObject nextHitObject = beatmap.HitObjects.at(i);
+		POINT currentPoint = (this)->getScaledPoints(currentHitObject.x, currentHitObject.y);
+		POINT nextPoint = (this)->getScaledPoints(nextHitObject.x, nextHitObject.y);
+		// at this point, the cursor is already on the hitObject.
+		while ((this)->getCurrentAudioTime() < currentHitObject.time) {
+			if ((this)->isPlaying == false) { return; }
+		}
+		// press key when reach the time
+		if (leftKeysTurn) {
+			Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
+		}
+		else {
+			Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
+		}
+		
+		if (currentHitObject.type == HitObject::TypeE::slider) {
+			// move slider regardless of type and after reaching the slider end, move linearly to next hitObject
+			// the duration of moving linearly is divide by 2 to reduce latency and also improve readability
+			POINT endPoint = Input::sliderMove(currentHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
+			// after the slider ends, release the key
+			if (leftKeysTurn) {
+				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
+				leftKeysTurn = false;
+			}
+			else {
+				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
+				leftKeysTurn = true;
+			}
+			Input::circleLinearMove(endPoint, nextPoint, (nextHitObject.time - currentHitObject.time - currentHitObject.sliderDuration) / 2);
+
+		}
+		else if (currentHitObject.type == HitObject::TypeE::spinner) {
+			POINT endPoint = Input::spinnerMove(center, currentHitObject.spinnerEndTime - currentHitObject.time);
+			if (leftKeysTurn) {
+				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
+				leftKeysTurn = false;
+			}
+			else {
+				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
+				leftKeysTurn = true;
+			}
+			// same reason as above
+			Input::circleLinearMove(endPoint, nextPoint, (nextHitObject.time - currentHitObject.spinnerEndTime) / 2);
+		}
+		else { // circle
+			// sleep so that the key press is detected by the game client
+			// becuz if not sleep, pressing and releasing happen almost simultaneously and cannot be detected
+			// should be at least 10 millisecs 
+			Sleep(10); 
+			if (leftKeysTurn) {
+				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
+				leftKeysTurn = false;
+			}
+			else {
+				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
+				leftKeysTurn = true;
+			}
+			Input::circleLinearMove(currentPoint, nextPoint, (nextHitObject.time - currentHitObject.time) / 2);
+		}
+	}
+
+	// play last hitObject as it is not played in the loop (if it's circle then it's already done)
+	HitObject lastHitObject = beatmap.HitObjects.back();
+	while ((this)->getCurrentAudioTime() < lastHitObject.time + beatmap.timeRange300 - 3) {
+		if ((this)->isPlaying == false) { return; }
+	}
+	if (leftKeysTurn) {
+		Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
+	}
+	else {
+		Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
+	}
+
+	if (lastHitObject.type == HitObject::TypeE::slider) {
+		Input::sliderMove(lastHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
+	}
+	else if (lastHitObject.type == HitObject::TypeE::spinner) {
+		POINT center = (this)->getScaledPoints(256, 192);
+		Input::spinnerMove(center, lastHitObject.spinnerEndTime - lastHitObject.time);
+	}
+
+	Sleep(10); // account for circle.
+	// release both key to prevent unwanted behaviour
+	Input::sentKeyInput(Input::LEFT_KEY, false);
+	Input::sentKeyInput(Input::RIGHT_KEY, false);
+}
+
 // ---------------------------------------Testing area, delete when finish----------------------------------
 void OsuBot::testTime() {
-	/*cout << ProcessTools::getWindowTextString((this)->windowHandle) << endl;
-	cout << (this)->getCurrentAudioTime() << endl;*/
-	//cout << (this)->getPauseSignal() << endl;
+	cout << ProcessTools::getWindowTextString((this)->windowHandle) << endl;
+	cout << (this)->getCurrentAudioTime() << endl;
+	cout << (this)->getPauseSignal() << endl;
 }
 
 // for testing
 void OsuBot::loadBeatmap(string fileName) {
+	thread checkIfIsPlaying(&OsuBot::updateIsPlaying, this);
+	cout << "Loading beatmap..." << endl;
 	Beatmap b = Beatmap(fileName);
 	if (b.allSet) {
-		cout << "Starting: " << b.fileName << endl;
-		(this)->modRelax(b);
-		cout << "Ending: " << b.fileName << endl;
-		//bool leftKeysTurn = true;
-		//bool alternate = false;
-		//for (auto hitObject : b.HitObjects) {
-		//	// loop for waiting till timing to press comes
-		//	while (true) { 
-		//		//POINT currentCursorPosition;
-		//		//POINT p; // current hitObject coordinates
-		//		//
-		//		//p = (this)->getScaledPoints(hitObject.x, hitObject.y);
-		//		//GetCursorPos(&currentCursorPosition);
-		//		//float distance = sqrt(pow((currentCursorPosition.x - p.x), 2) + pow((currentCursorPosition.y - p.y), 2));
-		//		//bool withinCircle = distance < b.circleRadius;
-		//		int time = (this)->getCurrentAudioTime();
-		//		if (( time > hitObject.time - b.timeRange300 )) {
-		//			break;
-		//		}
-		//	}
-		//	/*POINT p;
-		//	p = (this)->getScaledPoints(hitObject.x, hitObject.y);
-		//	SetCursorPos(p.x, p.y);*/
-		//	/*if (alternate) {
-		//		(this)->sentKeyInput('q', false);
-		//		(this)->sentKeyInput('w', true);
-		//		alternate = false;
-		//		}
-		//		else {
-		//		(this)->sentKeyInput('w', false);
-		//		(this)->sentKeyInput('q', true);
-		//		alternate = true;
-		//	}*/
-
-		//	if (hitObject.type == TypeE::circle) {
-		//		if (leftKeysTurn) {
-		//			(this)->sentKeyInput(OsuBot::LEFT_KEY, true); // press left key
-		//			Sleep(rand() % 5 + 10); // sleep for random period of time between 10ms to 15ms
-		//			(this)->sentKeyInput(OsuBot::LEFT_KEY, false); // release left key
-		//			leftKeysTurn = false;
-		//		}
-		//		else {
-		//			(this)->sentKeyInput(OsuBot::RIGHT_KEY, true); // press right key
-		//			Sleep(rand() % 5 + 10); // sleep for random period of time between 10ms to 15ms
-		//			(this)->sentKeyInput(OsuBot::RIGHT_KEY, false); // release right key
-		//			leftKeysTurn = true;
-		//		}
-		//	}
-		//	else if (hitObject.type == TypeE::slider) {
-		//		if (leftKeysTurn) {
-		//			(this)->sentKeyInput(OsuBot::LEFT_KEY, true); // press left key
-		//			Sleep(hitObject.sliderDuration + (rand() % 10 + 5)); //sleep for random period of time between 5ms to 15ms after sliderDuration
-		//			(this)->sentKeyInput(OsuBot::LEFT_KEY, false); // release left key
-		//			leftKeysTurn = false;
-		//		}
-		//		else {
-		//			(this)->sentKeyInput(OsuBot::RIGHT_KEY, true); // press right key
-		//			Sleep(hitObject.sliderDuration + (rand() % 10 + 5)); //sleep for random period of time between 5ms to 15ms after sliderDuration
-		//			(this)->sentKeyInput(OsuBot::RIGHT_KEY, false); // release right key
-		//			leftKeysTurn = true;
-		//		}
-		//	}
-		//	else if (hitObject.type == TypeE::spinner) {
-		//		if (leftKeysTurn) {
-		//			(this)->sentKeyInput(OsuBot::LEFT_KEY, true); // press left key
-		//			Sleep(hitObject.spinnerEndTime - hitObject.time + (rand() % 9)); // sleep min till spinner ends, max till endTime + 8ms
-		//			(this)->sentKeyInput(OsuBot::LEFT_KEY, false); // release left key
-		//			leftKeysTurn = false;
-		//		}
-		//		else {
-		//			(this)->sentKeyInput(OsuBot::RIGHT_KEY, true); // press right key
-		//			Sleep(hitObject.spinnerEndTime - hitObject.time + (rand() % 9)); // sleep min till spinner ends, max till endTime + 10ms
-		//			(this)->sentKeyInput(OsuBot::RIGHT_KEY, false); // release right key
-		//			leftKeysTurn = true;
-		//		}
-		//	}
-		//}
-
-		/*for (auto hitObject : b.HitObjects) {
-		while ((this)->getCurrentAudioTime() < hitObject.time - 3) {}
-		POINT p;
-		p = (this)->getScaledPoints(hitObject.x, hitObject.y);
-		SetCursorPos(p.x, p.y);
-		}*/
+		cout << "Starting: " << fileName << endl;
+		//(this)->modRelax(b);
+		// TODO: solve rest time cursor move instantly
+		//(this)->modAutoPilot(b);
+		(this)->modAuto(b);
+		checkIfIsPlaying.join();
+		cout << "Ending: " << fileName << endl;
 	}
 	else {
-		throw OsuBotException("Error loading beatmap: " + b.fileName);
+		throw OsuBotException("Error loading beatmap: " + b.fullPathBeatmapFileName);
 	}
-
-
-	// get cursorPOs
-	// determine if in the radius
-	// if yes, press
-	// if no, wait till the end and press at the end
-	// determine endtime and unpressed at end time
-
-	/*SliderMultiplier(Decimal) specifies the multiplier of the slider velocity.
-	The velocity at slider multiplier = 1 is 100 osu!pixels per beat.A slider multiplier of 2 would yield a velocity of 200 osu!pixels per beat.
-	The default slider multiplier is 1.4 when the property is omitted.*/
-
-
 }
 
 // beta version 
 void OsuBot::start() {
-	/*while (true) {
-	if (ProcessTools::getWindowTextString((this)->windowHandle) != "osu!" && (this)->getCurrentAudioTime() == 0) {
-	Beatmap b = Beatmap((this)->getFormattedWindowTitle(ProcessTools::getWindowTextString((this)->windowHandle)));
-	cout << "Starting " << b.fileName << endl;
-	bool alternate = false;
-	for (auto hitObject : b.HitObjects) {
-	while ((this)->getCurrentAudioTime() < hitObject.time - 3) {}
-	if (alternate) {
-	(this)->sentKeyInput('w', false);
-	(this)->sentKeyInput('w', true);
-	alternate = false;
+	cout << "Waiting for beatmap..." << endl;
+	while (true) {
+		auto currentTitle = ProcessTools::getWindowTextString((this)->windowTitleHandle);
+		if (currentTitle != "osu!") {
+			auto beatmapVec = (this)->osuDbMin.beatmapsMin.at(currentTitle);
+			if (beatmapVec.size() == 1) {
+				//cout << beatmapVec.at(0).songTitle << endl;
+				string fullPathAfterSongFolder = beatmapVec.at(0).folderName + "\\" + beatmapVec.at(0).nameOfOsuFile;
+				(this)->loadBeatmap(fullPathAfterSongFolder);
+				cout << "Waiting for beatmap..." << endl;
+			}
+			else {
+				cout << "multiple files" << endl;
+				for (auto beatmap : beatmapVec) {
+					cout << beatmap.songTitle << " ("<< beatmap.creatorName << ")" << endl;
+				}
+			}
+		}
+		Sleep(500);
 	}
-	else {
-	(this)->sentKeyInput('w', false);
-	(this)->sentKeyInput('q', true);
-	alternate = true;
-	}
-	}
-	(this)->sentKeyInput('w', false);
-	(this)->sentKeyInput('q', false);
-	cout << "Ending " << b.fileName << endl;
-	}
-	}*/
 }
 
-string OsuBot::getFormattedWindowTitle(string windowTitle) { // window title ONLY! if given full .osu file this won't work
-	string new_title = windowTitle.substr(windowTitle.find_first_of('-') + 2);
-	return new_title + ".osu";
-}
 
 // TODO: implement correctly.
 //		declare a variable for checking if the map is retried. i.e global var that tracks time. if goes smaller then...
@@ -375,3 +476,5 @@ string OsuBot::getFormattedWindowTitle(string windowTitle) { // window title ONL
 //		then implement if the cursor is within the circle, click early for better for relax mode.
 
 //TODO: account for mods
+
+// TODO: dun use bezier to calculate Linear slider to speed up loading

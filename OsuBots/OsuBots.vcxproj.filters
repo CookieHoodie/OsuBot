@@ -36,10 +36,13 @@
     <ClInclude Include="Functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="globalStructs.h">
+    <ClInclude Include="HitObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HitObject.h">
+    <ClInclude Include="OsuDbParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="beatmapRelatedStructs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -69,6 +72,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="HitObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OsuDbParser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

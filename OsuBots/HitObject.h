@@ -6,7 +6,9 @@
 
 #include "Functions.h"
 #include "TimingPoint.h"
-#include "globalStructs.h"
+#include "beatmapRelatedStructs.h"
+#include "windows.h"
+#include "math.h"
 
 using namespace std;
 
@@ -30,11 +32,12 @@ public:
 	// -----------------(Variables below this line WILL NOT be used if the hitobject is not of the types!)-----------------
 	// Sliders:  
 	char sliderType;
-	vector<CurvePointsS> CurvePoints;
+	vector<vector<CurvePointsS>> CurvePoints;
 	int repeat;
 	float pixelLength;
 	// calculated variables
 	int sliderDuration;
+	vector<POINT> pointsOnCurve;
 
 	// Spinners:
 	int spinnerEndTime;
@@ -43,8 +46,14 @@ private:
 	// storing info into member variables
 	void processHitObjectLine(string hitObjectLine, vector<TimingPoint> TimingPoints, int* timingPointIndex, DifficultyS Difficulty);
 
+	// calculations
 	// calculate timing points related
 	float getRealCurrentMPB(int hitObjectTime, vector<TimingPoint> TimingPoints, int* timingPointIndex);
+	// calculate sliders' pointsOnCurve
+	void calcAndSetPointsOnCurve();
+	// bezier curve calculations
+	static double binomialCoef(int n, int k);
+	static POINT bezierCurve(vector<CurvePointsS> curvePointsV, float t); 
 };
 // --------------------------------------------------End of HitObject Class---------------------------------------------
 

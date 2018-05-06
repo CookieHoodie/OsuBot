@@ -1,14 +1,14 @@
 #pragma once
 
 #include <math.h> 
-#include <cstdlib>
-#include <ctime>
+#include <thread>
 
 #include "ProcessTools.h"
 #include "SigScanner.h"
 #include "Beatmap.h"
 #include "HitObject.h"
 #include "Input.h"
+#include "OsuDbParser.h"
 
 #include <iostream>  // both are for testing purpose. Delete when done
 using namespace std;
@@ -41,7 +41,6 @@ public:
 	void testTime();
 	void loadBeatmap(string fileName); // should be loaded automatically
 	void start(); // need to be optimized
-	static string getFormattedWindowTitle(string windowTitle);
 	// -------------------------End of testing area--------------------------------------
 private:
 	// --------------------------variables-----------------------------
@@ -49,6 +48,7 @@ private:
 	DWORD processID;
 	HANDLE osuHandle;
 	HWND windowHandle;
+	HWND windowTitleHandle;
 	DWORD currentAudioTimeAddress;
 	DWORD pauseSignalAddress;
 
@@ -56,6 +56,10 @@ private:
 	float pointsMultiplierX;
 	float pointsMultiplierY;
 	POINT cursorStartPoints;
+	bool isPlaying;
+
+	// Beatmap related variables
+	OsuDbParser osuDbMin;
 
 	// -------------------------functions-----------------------
 	// Process related functions
@@ -64,6 +68,7 @@ private:
 	int getCurrentAudioTime();
 	//DWORD getPauseSignalAddress();
 	int getPauseSignal();
+	void updateIsPlaying();
 
 	// Gameplay related functions
 	void setCursorStartPoints();
@@ -71,5 +76,7 @@ private:
 
 	// Mods
 	void modRelax(Beatmap beatmap);
+	void modAutoPilot(Beatmap beatmap); 
+	void modAuto(Beatmap beatmap);
 };
 

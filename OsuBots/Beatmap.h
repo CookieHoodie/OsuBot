@@ -8,32 +8,32 @@
 #include <stdlib.h> 
 
 #include "Functions.h"
-#include "globalStructs.h"
+#include "beatmapRelatedStructs.h"
 #include "HitObject.h"
 #include "TimingPoint.h"
 
 using namespace std;
 namespace fs = std::experimental::filesystem; // for C++ 14
 
-											  // USAGE:
-											  // #include "Beatmap.h"
-											  //
-											  // Beatmap beatmap = Beatmap("song_name.osu")
+// USAGE:
+// #include "Beatmap.h"
+//
+// Beatmap beatmap = Beatmap("song_name.osu")
 
-											  // This will load the song info into beatmap object.
-											  // Currently only few attributes are loaded, unimportant ones are neglected.
+// This will load the song info into beatmap object.
+// Currently only few attributes are loaded, unimportant ones are neglected.
 
 
-											  // ------------------------------------------------Beatmap class---------------------------------------------------
+// ------------------------------------------------Beatmap class---------------------------------------------------
 class Beatmap
 {
 public:
 	// constructor & destructor
-	Beatmap(string fileName);
+	Beatmap(string fullPathAfterSongsFolder);
 
 	// variables
 	const static string FOLDERPATH; // "C:\\Users\\ong\\AppData\\Local\\osu!\\Songs\\";
-	string fileName; // format: "xxxxxxxx.osu"   *remember .osu !!!
+	//string fileName; // format: "xxxxxxxx.osu"   *remember .osu !!!
 	string fullPathBeatmapFileName;
 	bool allSet; // for checking if beatmap is successfully set
 	GeneralS General;
@@ -49,7 +49,7 @@ public:
 
 private:
 	void processBeatmap();
-	void setFullPathBeatmapFileName();
+	//void setFullPathBeatmapFileName(); // deprecated
 };
 // -------------------------------------------------------End of Beatmap class----------------------------------------
 

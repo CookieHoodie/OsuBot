@@ -11,6 +11,7 @@ class ProcessTools
 public:
 	static DWORD getProcessID(const wchar_t* processName);
 	static HWND getWindowHandle(DWORD processID);
+	static HWND getWindowTitleHandle(LPCSTR windowTitle);
 	static string getWindowTextString(HWND windowHandle);
 	//static int readFromMemory(DWORD processID, void* memoryAddress);
 	//static bool readFromMemory(HANDLE hProcess, void* memoryAddress, void* output, int size);

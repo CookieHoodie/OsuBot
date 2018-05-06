@@ -148,10 +148,11 @@
   <ItemGroup>
     <ClInclude Include="Beatmap.h" />
     <ClInclude Include="Functions.h" />
-    <ClInclude Include="globalStructs.h" />
+    <ClInclude Include="beatmapRelatedStructs.h" />
     <ClInclude Include="HitObject.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="OsuBot.h" />
+    <ClInclude Include="OsuDbParser.h" />
     <ClInclude Include="ProcessTools.h" />
     <ClInclude Include="SigScanner.h" />
     <ClInclude Include="TimingPoint.h" />
@@ -163,6 +164,7 @@
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="OsuBot.cpp" />
+    <ClCompile Include="OsuDbParser.cpp" />
     <ClCompile Include="ProcessTools.cpp" />
     <ClCompile Include="SigScanner.cpp" />
     <ClCompile Include="TimingPoint.cpp" />

@@ -24,9 +24,10 @@ DWORD ProcessTools::getProcessID(const wchar_t* processName)
 	return process_id;
 }
 
-// get windowHandle for retrieving window title
+// window handle for calculating cursor
 HWND ProcessTools::getWindowHandle(DWORD processID)
 {
+	 //This works fine until the osu is in fullscreen--the window title cannot be retrieved from this handle
 	std::pair<HWND, DWORD> params = { 0, processID };
 
 	// Enumerate the windows using a lambda to process each window
@@ -53,6 +54,12 @@ HWND ProcessTools::getWindowHandle(DWORD processID)
 	}
 
 	return 0;
+}
+
+// get windowHandle for retrieving window title
+HWND ProcessTools::getWindowTitleHandle(LPCSTR windowTitle) {
+	HWND windowHandle = FindWindowA(NULL, windowTitle);
+	return windowHandle; // return NULL if not found
 }
 
 // read title in string

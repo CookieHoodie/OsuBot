@@ -1,37 +1,39 @@
 #include "Beatmap.h"
 
 // path to osu songs folder. Change this if the directory changes
-const string Beatmap::FOLDERPATH = "C:\\Users\\ong\\AppData\\Local\\osu!\\Songs\\";
+const string Beatmap::FOLDERPATH = OSUROOTPATH + "Songs\\";
 
 // -----------------------------------Constructor & Destructor---------------------------------------
-Beatmap::Beatmap(string fileName)
+Beatmap::Beatmap(string fullPathAfterSongsFolder)
 {
-	(this)->fileName = fileName;
-	(this)->setFullPathBeatmapFileName();
+	//(this)->fileName = fileName;
+	//(this)->setFullPathBeatmapFileName(); // deprecated
+	(this)->fullPathBeatmapFileName = Beatmap::FOLDERPATH + fullPathAfterSongsFolder;
 	(this)->processBeatmap();
 }
 
 // ------------------------------------General functions-----------------------------------------------
-void Beatmap::setFullPathBeatmapFileName() { // only depends on (this)->fileName and Beatmap::FOLDERPATH
-	string folderName = (this)->fileName.substr(0, (this)->fileName.find_last_of("(") - 1); // get name for finding folder (-1 to remove white space)
-	folderName.erase(remove_if(folderName.begin(), folderName.end(), [](char c) { return c == '.'; }), folderName.end()); // remove all dots
-	string songFolder = "";
-	for (auto &p : fs::directory_iterator(Beatmap::FOLDERPATH)) {
-		if (p.path().string().find(folderName) != string::npos) {
-			songFolder = p.path().string();
-			break;
-		}
-	}
-	if (!songFolder.empty()) {
-		fs::path dir(songFolder);
-		fs::path file(fileName);
-		fs::path full_path = dir / file;
-		(this)->fullPathBeatmapFileName = full_path.string();
-	}
-	else {
-		(this)->fullPathBeatmapFileName = "";
-	}
-}
+// deprecated
+//void Beatmap::setFullPathBeatmapFileName() { // only depends on (this)->fileName and Beatmap::FOLDERPATH
+//	string folderName = (this)->fileName.substr(0, (this)->fileName.find_last_of("(") - 1); // get name for finding folder (-1 to remove white space)
+//	folderName.erase(remove_if(folderName.begin(), folderName.end(), [](char c) { return c == '.'; }), folderName.end()); // remove all dots
+//	string songFolder = "";
+//	for (auto &p : fs::directory_iterator(Beatmap::FOLDERPATH)) {
+//		if (p.path().string().find(folderName) != string::npos) {
+//			songFolder = p.path().string();
+//			break;
+//		}
+//	}
+//	if (!songFolder.empty()) {
+//		fs::path dir(songFolder);
+//		fs::path file(fileName);
+//		fs::path full_path = dir / file;
+//		(this)->fullPathBeatmapFileName = full_path.string();
+//	}
+//	else {
+//		(this)->fullPathBeatmapFileName = "";
+//	}
+//}
 
 void Beatmap::processBeatmap() { // only depends on (this)->fullPathBeatmapFileName
 	ifstream osuFile;
