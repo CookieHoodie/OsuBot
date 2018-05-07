@@ -133,9 +133,3 @@ private:
 	// member vars 
 };
 
-
-
-//unordered_map<string, vector<string>> dict;
-//dict.insert({ "testing" , vector<string>(1, "testing value") });
-
-//cout << dict["testing"].at(0) << endl;

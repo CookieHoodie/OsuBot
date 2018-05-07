@@ -107,7 +107,7 @@ int OsuBot::getPauseSignal() {
 	return pauseSignal;
 }
 
-// threading only
+// -----------------------------------------Functions for threading-------------------------------------------
 void OsuBot::updateIsPlaying() {
 	(this)->isPlaying = true;
 	while (true) {
@@ -432,7 +432,7 @@ void OsuBot::loadBeatmap(string fileName) {
 		//(this)->modAutoPilot(b);
 		(this)->modAuto(b);
 		checkIfIsPlaying.join();
-		cout << "Ending: " << fileName << endl;
+		cout << "Ending: " << fileName << endl << endl;
 	}
 	else {
 		throw OsuBotException("Error loading beatmap: " + b.fullPathBeatmapFileName);
@@ -441,35 +441,85 @@ void OsuBot::loadBeatmap(string fileName) {
 
 // beta version 
 void OsuBot::start() {
-	cout << "Waiting for beatmap..." << endl;
 	while (true) {
-		auto currentTitle = ProcessTools::getWindowTextString((this)->windowTitleHandle);
-		if (currentTitle != "osu!") {
-			auto beatmapVec = (this)->osuDbMin.beatmapsMin.at(currentTitle);
-			if (beatmapVec.size() == 1) {
-				//cout << beatmapVec.at(0).songTitle << endl;
-				string fullPathAfterSongFolder = beatmapVec.at(0).folderName + "\\" + beatmapVec.at(0).nameOfOsuFile;
-				(this)->loadBeatmap(fullPathAfterSongFolder);
-				cout << "Waiting for beatmap..." << endl;
+		system("cls");
+		int choice = 0;
+		string input;
+		cout << "1) Auto" << endl;
+		cout << "2) Auto pilot" << endl;
+		cout << "3) Relax" << endl;
+		cout << "Please choose a mod: ";
+		cin >> input;
+		while (!(all_of(input.begin(), input.end(), isdigit)) || (stoi(input) != 1 && stoi(input) != 2 && stoi(input) != 3)) {
+			cout << "Invalid input. Please enter again." << endl;
+			cout << "1) Auto" << endl;
+			cout << "2) Auto pilot" << endl;
+			cout << "3) Relax" << endl;
+			cout << "Please choose a mod: ";
+			cin >> input;
+		}
+		choice = stoi(input);
+		cout << choice << endl;
+		system("cls");
+		cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
+
+		while (true) { // correct this
+			if (GetAsyncKeyState(VK_ESCAPE) && (GetConsoleWindow() == GetForegroundWindow())) {
+				cout << "Esc detected. Exiting." << endl;
+				Sleep(500);
+				break;
 			}
-			else {
-				cout << "multiple files" << endl;
-				for (auto beatmap : beatmapVec) {
-					cout << beatmap.songTitle << " ("<< beatmap.creatorName << ")" << endl;
+			auto currentTitle = ProcessTools::getWindowTextString((this)->windowTitleHandle);
+			if (currentTitle != "osu!") {
+				auto beatmapVec = (this)->osuDbMin.beatmapsMin.at(currentTitle);
+				if (beatmapVec.size() == 1) {
+					//cout << beatmapVec.at(0).songTitle << endl;
+					string fullPathAfterSongFolder = beatmapVec.at(0).folderName + "\\" + beatmapVec.at(0).nameOfOsuFile;
+					thread checkIfIsPlaying(&OsuBot::updateIsPlaying, this);
+					cout << "Beatmap detected. Loading beatmap..." << endl;
+					Beatmap b = Beatmap(fullPathAfterSongFolder);
+					/*do {
+					
+					} while ();
+*/
+					if (b.allSet) {
+						cout << "Starting: " << beatmapVec.at(0).nameOfOsuFile << endl;
+						switch (choice) {
+						case 1:
+							(this)->modAuto(b);
+							break;
+						case 2:
+							(this)->modAutoPilot(b);
+							break;
+						case 3:
+							(this)->modRelax(b);
+							break;
+						}
+						checkIfIsPlaying.join();
+						cout << "Ending: " << beatmapVec.at(0).nameOfOsuFile << endl << endl;
+					}
+					else {
+						throw OsuBotException("Error loading beatmap: " + b.fullPathBeatmapFileName);
+					}
+					//(this)->loadBeatmap(fullPathAfterSongFolder);
+					cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
+				}
+				else {
+					cout << "multiple files" << endl;
+					for (auto beatmap : beatmapVec) {
+						cout << beatmap.songTitle << " (" << beatmap.creatorName << ")" << endl;
+					}
 				}
 			}
+			Sleep(200);
 		}
-		Sleep(500);
 	}
 }
 
 
 // TODO: implement correctly.
-//		declare a variable for checking if the map is retried. i.e global var that tracks time. if goes smaller then...
-//		run the program in a loop after initialization and auto start by checking title and time
 //		implement pause check and retry check and die check
-
-// optimization: may consider merge find address functions into one
+//		and also review replay check?
 
 // TODO2:
 //		correctly posit the position of cursor
@@ -477,4 +527,4 @@ void OsuBot::start() {
 
 //TODO: account for mods
 
-// TODO: dun use bezier to calculate Linear slider to speed up loading
+// TODO: dun use bezier to calculate Linear slider to speed up loading (ok)

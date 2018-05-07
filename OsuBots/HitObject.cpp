@@ -199,6 +199,9 @@ void HitObject::calcAndSetPointsOnCurve() {
 			(this)->pointsOnCurve.push_back(p);
 		}
 	}
+	else if ((this)->sliderType == 'L') {
+		//do nothing
+	}
 	else { 
 		// if not Perfect circle, calculate using bezier function
 		// Getting points on bezier curve is easy but making them having same velocity is hard
