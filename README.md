@@ -30,4 +30,9 @@ Class used for parsing osu!.db data into an object for faster access to each bea
 ### OsuBot class:
 Actual class that implements bots and interface
 
+# Usage
+Change the constant OSUROOTPATH in beatmapRelatedStructs.h to match your path
+
+Change LEFT_KEY and RIGHT_KEY in Input.cpp to match your hitkeys
+
 ## Tutorial will be made once this project is done
