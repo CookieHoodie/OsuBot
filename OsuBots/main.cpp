@@ -342,18 +342,6 @@ int main() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 	wchar_t* processName = L"osu!.exe";
 	//POINT pq; 
 	//pq.x = 274; pq.y = 232;
@@ -684,62 +672,5 @@ int main() {
 	//	}*/
 	//}
 
-//unordered_map<string, vector<string>> dict;
-//dict.insert({ "testing" , vector<string>(1, "testing value") });
-
-//cout << dict["testing"].at(0) << endl;
-
-//ifstream infile;
-//string pathName = "C:\\Users\\ong\\AppData\\Local\\osu!\\osu!.db";
-//unsigned int version;
-//unsigned int folderCount;
-//bool accountUnlocked;
-//char stringPresent[1];
-//infile.open(pathName, ios::binary | ios::in);
-//if (infile) {
-//	infile.read((char*)&version, sizeof(version));
-//	infile.read((char*)&folderCount, sizeof(folderCount));
-//	infile.read((char*)&accountUnlocked, sizeof(accountUnlocked));
-//	infile.seekg(8, ios::cur);
-//	infile.read(stringPresent, sizeof(stringPresent));
-//	cout << version << endl;
-//	cout << folderCount << endl;
-//	cout << accountUnlocked << endl;
-//	if (stringPresent[0] == 0x0b) {
-//		//cout << stringPresentHex.str() << endl;
-//		unsigned int result = 0;
-//		int shift = 0;
-//		char bufferByte[1];
-//		while (true) {
-//			infile.read(bufferByte, sizeof(bufferByte));
-//			// & 127 gets last 7 bits
-//			result |= (bufferByte[0] & 127) << shift;
-//			// & 128 gets 1st bit
-//			// if 1st bit == 0, the decode process ends
-//			if (!(bufferByte[0] & (unsigned int)128)) {
-//				break;
-//			}
-//			shift += 7;
-//		}
-//		char* playerName = new char[result + 1];  // Allocate n ints and save ptr in a.
-//		infile.read(playerName, result);
-//		playerName[result] = '\0';
-//		string playerNameStr(playerName);
-//		cout << playerNameStr << endl;
-//		delete[] playerName;  // When done, free memory pointed to by a
-//		int numberOfBeatmaps;
-//		infile.read((char*)&numberOfBeatmaps, sizeof(numberOfBeatmaps));
-//		cout << numberOfBeatmaps << endl;
-//	}
-//	
-//	//cout << x[0] << endl;
-//}
-//infile.close();
-
-//OsuDbParser osuDb = OsuDbParser(pathName);
-//string test = "\xE7\x81\xB0\xE3\x81\xA8\xE5\xB9\xBB\xE6\x83\xB3\xE3\x81\xAE\xE3\x82\xB0\xE3\x83\xAA\xE3\x83\xA0\xE3\x82\xAC\xE3\x83\xAB";
-//string test2 = u8"灰と幻想のグリムガル";
-//cout << test << endl;
-//cout << test2 << endl;
 }
 

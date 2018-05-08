@@ -146,6 +146,7 @@ void OsuDbParser::processData(string fullPathToOsuDb) {
 			else {
 				beatmapIter->second.push_back(beatmap);
 			}
+
 			//cout << beatmap.songTitle << endl;
 			//cout << beatmap.difficulty << endl;
 			/*cout << beatmap.bytesOfBeatmapEntry << endl;

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <filesystem>
+//#include <filesystem>
 #include <stdlib.h> 
 
 #include "Functions.h"
@@ -13,7 +13,7 @@
 #include "TimingPoint.h"
 
 using namespace std;
-namespace fs = std::experimental::filesystem; // for C++ 14
+//namespace fs = std::experimental::filesystem; // for C++ 14
 
 
 // ------------------------------------------------Beatmap class---------------------------------------------------
@@ -24,7 +24,7 @@ public:
 	Beatmap(string fullPathAfterSongsFolder);
 
 	// variables
-	const static string FOLDERPATH; // "C:\\Users\\ong\\AppData\\Local\\osu!\\Songs\\";
+	const static string FOLDERPATH; 
 	//string fileName; // format: "xxxxxxxx.osu"   *remember .osu !!!
 	string fullPathBeatmapFileName;
 	bool allSet; // for checking if beatmap is successfully set

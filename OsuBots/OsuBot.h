@@ -2,6 +2,8 @@
 
 #include <math.h> 
 #include <thread>
+#include <windows.h>
+#include <iostream>  
 
 #include "ProcessTools.h"
 #include "SigScanner.h"
@@ -10,7 +12,6 @@
 #include "Input.h"
 #include "OsuDbParser.h"
 
-#include <iostream>  // both are for testing purpose. Delete when done
 using namespace std;
 
 // ***Exception handling ONLY occurs in this class!
@@ -37,10 +38,12 @@ public:
 	const static char* PAUSE_SIGNAL_MASK;
 	const static int PAUSE_SIGNAL_SIG_OFFSET;
 
+	// functions
+	void start(); 
+
 	// -----------------------Testing area, delete when finished------------------------------
 	void testTime();
 	void loadBeatmap(string fileName); // should be loaded automatically
-	void start(); // need to be optimized
 	// -------------------------End of testing area--------------------------------------
 private:
 	// --------------------------variables-----------------------------

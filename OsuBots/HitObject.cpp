@@ -141,14 +141,30 @@ void HitObject::calcAndSetPointsOnCurve() {
 		auto bSq = pow(ax - cx, 2) + pow(ay - cy, 2);
 		auto cSq = pow(ax - bx, 2) + pow(ay - by, 2);
 
-		// As it seems to work fine with "almostFlat" curve, I omitted the "fallback to bezier" in ori code.
-		// May consider to account for that as optimization later
+		// Account for "degenerate triangle" curve according to official code
+		// *I've also appended my own calculation as the official one doesn't seem to work in my case
+		// which checks if the circle is almost like linear
+		if (Functions::almostEquals(aSq, 0) || Functions::almostEquals(bSq, 0) || Functions::almostEquals(cSq, 0) || Functions::almostEquals(sqrt(bSq), sqrt(aSq) + sqrt(cSq))) {
+			/*(this)->sliderType = 'B';
+			(this)->calcAndSetPointsOnCurve();
+			(this)->sliderType = 'P';*/
+			(this)->sliderType = 'L'; // fake that this slider is Linear
+			// so far faking to 'L' is fine, but if encountered any bug later, consider fallback to 'B' instead
+			return;
+		}
 
 		float s = aSq * (bSq + cSq - aSq);
 		float t = bSq * (aSq + cSq - bSq);
 		float u = cSq * (aSq + bSq - cSq);
 
 		float sum = s + t + u;
+
+		if (Functions::almostEquals(sum, 0)) {
+			(this)->sliderType = 'B';
+			(this)->calcAndSetPointsOnCurve();
+			(this)->sliderType = 'P';
+			return;
+		}
 
 		// get the center of the circle
 		float centerx = (s * ax + t * bx + u * cx) / sum;

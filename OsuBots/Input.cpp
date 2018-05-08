@@ -165,11 +165,11 @@ POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, flo
 	bool reverse = false;
 	POINT unscaledEndPoint;
 	if (currentHitObject.sliderType == 'L') {
-		CurvePointsS start = currentHitObject.CurvePoints.at(0).at(0);
+		CurvePointsS start = currentHitObject.CurvePoints.at(0).front();
 		POINT startPoint;
 		startPoint.x = start.x * pointsMultiplierX + cursorStartPoints.x;
 		startPoint.y = start.y * pointsMultiplierY + cursorStartPoints.y;
-		CurvePointsS end = currentHitObject.CurvePoints.at(0).at(1);
+		CurvePointsS end = currentHitObject.CurvePoints.at(0).back();
 		POINT endPoint;
 		endPoint.x = end.x * pointsMultiplierX + cursorStartPoints.x;
 		endPoint.y = end.y * pointsMultiplierY + cursorStartPoints.y;

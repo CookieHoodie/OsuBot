@@ -39,7 +39,7 @@ OsuBot::OsuBot(wchar_t* processName)
 		cout << "Storing currentAudioTimeAddress... (This might take a while)" << endl;
 		(this)->currentAudioTimeAddress = (this)->getCurrentAudioTimeAddress();
 		cout << "Storing pauseSignalAddress..." << endl;
-		(this)->pauseSignalAddress = (this)->currentAudioTimeAddress + 0x24;
+		(this)->pauseSignalAddress = (this)->currentAudioTimeAddress + 0x24; // 0x24 is the offset to the pauseSignalAddress
 		cout << "Waiting osuDbThread to join..." << endl;
 		osuDbThread.join();
 		// seeding for random numbers
@@ -50,7 +50,6 @@ OsuBot::OsuBot(wchar_t* processName)
 		throw OsuBotException("Failed to get processID. Make sure the program is running!");
 	}
 
-	// TODO: use same variable for Osudb beatmap
 }
 
 OsuBot::~OsuBot()
@@ -109,9 +108,12 @@ int OsuBot::getPauseSignal() {
 
 // -----------------------------------------Functions for threading-------------------------------------------
 void OsuBot::updateIsPlaying() {
+	// this function is only called when beatmap is detected
+	// so first set isPlaying to true and then check if it's still true
 	(this)->isPlaying = true;
 	while (true) {
 		if (ProcessTools::getWindowTextString((this)->windowTitleHandle) == "osu!") {
+			// if map is exited, set isPlaying to false and exit this loop (and this thread)
 			(this)->isPlaying = false;
 			return;
 		}
@@ -190,6 +192,8 @@ void OsuBot::modRelax(Beatmap beatmap) {
 	for (auto hitObject : beatmap.HitObjects) {
 		// loop for waiting till timing to press comes
 		while (true) {
+			// constantly check if the map is still being played
+			// if it's not, break out of this function to end the map
 			if ((this)->isPlaying == false) { return; }
 			if (((this)->getCurrentAudioTime() > hitObject.time - beatmap.timeRange300)) {
 				break;
@@ -253,6 +257,8 @@ void OsuBot::modAutoPilot(Beatmap beatmap) {
 	HitObject firstHitObject = beatmap.HitObjects.front();
 	// "-300" and "250" following are the preset adjustments as to when the cursor should move
 	while ((this)->getCurrentAudioTime() < firstHitObject.time - 300) {
+		// while waiting for the time to hit hitObject, constantly check if the map is still being played
+		// if it's not, break out of this function to end the map
 		if ((this)->isPlaying == false) { return; }
 	}
 	POINT startPoint = (this)->getScaledPoints(firstHitObject.x, firstHitObject.y);
@@ -314,6 +320,8 @@ void OsuBot::modAuto(Beatmap beatmap) {
 	HitObject firstHitObject = beatmap.HitObjects.front();
 	// "-300" and "250" following are the preset adjustments as to when the cursor should move
 	while ((this)->getCurrentAudioTime() < firstHitObject.time - 300) {
+		// while waiting for the time to hit hitObject, constantly check if the map is still being played
+		// if it's not, break out of this function to end the map
 		if ((this)->isPlaying == false) { return; }
 	}
 	POINT startPoint = (this)->getScaledPoints(firstHitObject.x, firstHitObject.y);
@@ -413,6 +421,124 @@ void OsuBot::modAuto(Beatmap beatmap) {
 	Input::sentKeyInput(Input::RIGHT_KEY, false);
 }
 
+void OsuBot::start() {
+	while (true) {
+		system("cls"); // clear the console screen
+		int choice = 0;
+		string input;
+		cout << "1) Auto" << endl;
+		cout << "2) Auto pilot" << endl;
+		cout << "3) Relax" << endl;
+		cout << "Please choose a mod: ";
+		cin >> input;
+		// input validation
+		while (!(all_of(input.begin(), input.end(), isdigit)) || (stoi(input) != 1 && stoi(input) != 2 && stoi(input) != 3)) {
+			cout << "Invalid input. Please enter again." << endl;
+			cout << "1) Auto" << endl;
+			cout << "2) Auto pilot" << endl;
+			cout << "3) Relax" << endl;
+			cout << "Please choose a mod: ";
+			cin >> input;
+		}
+		choice = stoi(input);
+		cout << choice << endl;
+		system("cls");
+		cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
+
+		while (true) {
+			// Detect ESC key asynchronously to let user go back to menu to choose mod
+			if (GetAsyncKeyState(VK_ESCAPE) && (GetConsoleWindow() == GetForegroundWindow())) {
+				cout << "Esc detected. Exiting." << endl;
+				Sleep(500);
+				break;
+			}
+			// constantly check title to see if any map is played
+			auto currentTitle = ProcessTools::getWindowTextString((this)->windowTitleHandle);
+			if (currentTitle != "osu!") { // if map is played
+				auto beatmapVec = (this)->osuDbMin.beatmapsMin.at(currentTitle);
+				if (beatmapVec.size() == 1) { // if the map played is unique in its title name
+											  // formating for parsing to Beatmap class later
+					string fullPathAfterSongFolder = beatmapVec.at(0).folderName + "\\" + beatmapVec.at(0).nameOfOsuFile;
+					// run in a new thread checking if the map is still playing
+					thread checkIfIsPlaying(&OsuBot::updateIsPlaying, this);
+					cout << "Beatmap detected. Loading beatmap..." << endl;
+					Beatmap b = Beatmap(fullPathAfterSongFolder);
+					if (b.allSet) {
+						// start the bot
+						cout << "Starting: " << beatmapVec.at(0).nameOfOsuFile << endl;
+						switch (choice) {
+						case 1:
+							(this)->modAuto(b);
+							break;
+						case 2:
+							(this)->modAutoPilot(b);
+							break;
+						case 3:
+							(this)->modRelax(b);
+							break;
+						}
+						checkIfIsPlaying.join();
+						cout << "Ending: " << beatmapVec.at(0).nameOfOsuFile << endl << endl;
+					}
+					else {
+						throw OsuBotException("Error loading beatmap: " + b.fullPathBeatmapFileName);
+					}
+					cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
+				}
+				else { // if multiple maps have same title
+					   // bring the console to foreground for user to pick the correct map
+					HWND consoleHandle = GetConsoleWindow();
+					if (SetForegroundWindow(consoleHandle)) {
+						cout << "Multiple files are detected. Please pick the correct map: " << endl;
+						for (int index = 0; index < beatmapVec.size(); index++) {
+							cout << index + 1 << ") " << beatmapVec.at(index).nameOfOsuFile << endl;
+						}
+						cout << "Choice: ";
+						cin >> input;
+						while (!(all_of(input.begin(), input.end(), isdigit)) || (stoi(input) < 1 || stoi(input) > beatmapVec.size())) {
+							cout << "Invalid input. Please enter again." << endl;
+							for (int index = 0; index < beatmapVec.size(); index++) {
+								cout << index + 1 << ") " << beatmapVec.at(index).nameOfOsuFile << endl;
+							}
+							cout << "Choice: ";
+							cin >> input;
+						}
+						auto chosenMap = beatmapVec.at(stoi(input) - 1);
+						string fullPathAfterSongFolder = chosenMap.folderName + "\\" + chosenMap.nameOfOsuFile;
+						thread checkIfIsPlaying(&OsuBot::updateIsPlaying, this);
+						cout << "Loading beatmap..." << endl;
+						Beatmap b = Beatmap(fullPathAfterSongFolder);
+						if (b.allSet) {
+							cout << "Starting: " << chosenMap.nameOfOsuFile << endl;
+							switch (choice) {
+							case 1:
+								(this)->modAuto(b);
+								break;
+							case 2:
+								(this)->modAutoPilot(b);
+								break;
+							case 3:
+								(this)->modRelax(b);
+								break;
+							}
+							checkIfIsPlaying.join();
+							cout << "Ending: " << chosenMap.nameOfOsuFile << endl << endl;
+						}
+						else {
+							throw OsuBotException("Error loading beatmap: " + b.fullPathBeatmapFileName);
+						}
+						cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
+					}
+					else {
+						cout << "Failed to bring console to foreground." << endl;
+					}
+				}
+			}
+			Sleep(200); // Check for title every 0.2 sec
+		}
+	}
+}
+
 // ---------------------------------------Testing area, delete when finish----------------------------------
 void OsuBot::testTime() {
 	cout << ProcessTools::getWindowTextString((this)->windowHandle) << endl;
@@ -439,82 +565,7 @@ void OsuBot::loadBeatmap(string fileName) {
 	}
 }
 
-// beta version 
-void OsuBot::start() {
-	while (true) {
-		system("cls");
-		int choice = 0;
-		string input;
-		cout << "1) Auto" << endl;
-		cout << "2) Auto pilot" << endl;
-		cout << "3) Relax" << endl;
-		cout << "Please choose a mod: ";
-		cin >> input;
-		while (!(all_of(input.begin(), input.end(), isdigit)) || (stoi(input) != 1 && stoi(input) != 2 && stoi(input) != 3)) {
-			cout << "Invalid input. Please enter again." << endl;
-			cout << "1) Auto" << endl;
-			cout << "2) Auto pilot" << endl;
-			cout << "3) Relax" << endl;
-			cout << "Please choose a mod: ";
-			cin >> input;
-		}
-		choice = stoi(input);
-		cout << choice << endl;
-		system("cls");
-		cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
 
-		while (true) { // correct this
-			if (GetAsyncKeyState(VK_ESCAPE) && (GetConsoleWindow() == GetForegroundWindow())) {
-				cout << "Esc detected. Exiting." << endl;
-				Sleep(500);
-				break;
-			}
-			auto currentTitle = ProcessTools::getWindowTextString((this)->windowTitleHandle);
-			if (currentTitle != "osu!") {
-				auto beatmapVec = (this)->osuDbMin.beatmapsMin.at(currentTitle);
-				if (beatmapVec.size() == 1) {
-					//cout << beatmapVec.at(0).songTitle << endl;
-					string fullPathAfterSongFolder = beatmapVec.at(0).folderName + "\\" + beatmapVec.at(0).nameOfOsuFile;
-					thread checkIfIsPlaying(&OsuBot::updateIsPlaying, this);
-					cout << "Beatmap detected. Loading beatmap..." << endl;
-					Beatmap b = Beatmap(fullPathAfterSongFolder);
-					/*do {
-					
-					} while ();
-*/
-					if (b.allSet) {
-						cout << "Starting: " << beatmapVec.at(0).nameOfOsuFile << endl;
-						switch (choice) {
-						case 1:
-							(this)->modAuto(b);
-							break;
-						case 2:
-							(this)->modAutoPilot(b);
-							break;
-						case 3:
-							(this)->modRelax(b);
-							break;
-						}
-						checkIfIsPlaying.join();
-						cout << "Ending: " << beatmapVec.at(0).nameOfOsuFile << endl << endl;
-					}
-					else {
-						throw OsuBotException("Error loading beatmap: " + b.fullPathBeatmapFileName);
-					}
-					//(this)->loadBeatmap(fullPathAfterSongFolder);
-					cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
-				}
-				else {
-					cout << "multiple files" << endl;
-					for (auto beatmap : beatmapVec) {
-						cout << beatmap.songTitle << " (" << beatmap.creatorName << ")" << endl;
-					}
-				}
-			}
-			Sleep(200);
-		}
-	}
-}
 
 
 // TODO: implement correctly.
