@@ -55,5 +55,4 @@ private:
 	static double binomialCoef(int n, int k);
 	static POINT bezierCurve(vector<CurvePointsS> curvePointsV, float t); 
 };
-// --------------------------------------------------End of HitObject Class---------------------------------------------
 

@@ -15,14 +15,6 @@
 using namespace std;
 namespace fs = std::experimental::filesystem; // for C++ 14
 
-// USAGE:
-// #include "Beatmap.h"
-//
-// Beatmap beatmap = Beatmap("song_name.osu")
-
-// This will load the song info into beatmap object.
-// Currently only few attributes are loaded, unimportant ones are neglected.
-
 
 // ------------------------------------------------Beatmap class---------------------------------------------------
 class Beatmap

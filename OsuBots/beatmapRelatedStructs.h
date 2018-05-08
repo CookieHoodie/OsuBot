@@ -36,6 +36,3 @@ typedef struct Difficulty {
 	float sliderMultiplier;
 	int sliderTickRate;
 } DifficultyS;
-
-
-// TODO: transfer back all these structs to respective class so that each class can be independently published

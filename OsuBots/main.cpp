@@ -21,7 +21,7 @@ using namespace std;
 //const string fileName = "Sota Fujimori - polygon (Kaifin) [Lolirii's Collab Expert].osu";
 //const string fileName = "xi - Glorious Crown (Monstrata) [FOUR DIMENSIONS].osu";
 //const string fileName = "Panda Eyes - ILY (M a r v o l l o) [Fanteer's Final Level].osu";
-const string fileName = "Camellia - Feelin Sky (Camellia's 200step Self-remix) (Smoothie World) [Zero Gravity].osu";
+//const string fileName = "Camellia - Feelin Sky (Camellia's 200step Self-remix) (Smoothie World) [Zero Gravity].osu";
 
 
 //var bx = 0, by = 0, n = pointArray.length - 1; // degree
@@ -107,123 +107,123 @@ const string fileName = "Camellia - Feelin Sky (Camellia's 200step Self-remix) (
 //		by += this.binomialCoef(n, i) * Math.pow(1 - t, n - i) * Math.pow(t, i) * pointArray[i].y;
 //	}
 
-POINT scalePoints(int x, int y) {
-	POINT p;
-	p.x = x * 1.60156250 + 274;
-	p.y = y * 1.60208333 + 88;
-	return p;
-}
+//POINT scalePoints(int x, int y) {
+//	POINT p;
+//	p.x = x * 1.60156250 + 274;
+//	p.y = y * 1.60208333 + 88;
+//	return p;
+//}
 
-class Vector2
-{
-public:
-	//MEMBERS
-	float x;
-	float y;
-
-	//CONSTRUCTORS
-	Vector2(void) : x(0), y(0) { }
-	Vector2(float xValue, float yValue) : x(xValue), y(yValue) { }
-
-	//DECONSTRUCTOR
-	~Vector2(void) { };
-
-	//METHODS
-
-	float Length() const { return sqrt(x * x + y * y); }
-	float LengthSquared() const { return x * x + y * y; }
-	/*float Distance(const Vector2 & v) const;
-	float DistanceSquared(const Vector2 & v) const;
-	float Dot(const Vector2 & v) const;
-	float Cross(const Vector2 & v) const;
-
-	Vector2 & Normal();
-	Vector2 & Normalize();*/
-
-	//ASSINGMENT AND EQUALITY OPERATIONS
-	inline Vector2 & Vector2::operator = (const Vector2 & v) { x = v.x; y = v.y; return *this; }
-	inline Vector2 & Vector2::operator = (const float & f) { x = f; y = f; return *this; }
-	inline Vector2 & Vector2::operator - (void) { x = -x; y = -y; return *this; }
-	inline bool Vector2::operator == (const Vector2 & v) const { return (x == v.x) && (y == v.y); }
-	inline bool Vector2::operator != (const Vector2 & v) const { return (x != v.x) || (y != v.y); }
-
-	//VECTOR2 TO VECTOR2 OPERATIONS
-	inline const Vector2 Vector2::operator + (const Vector2 & v) const { return Vector2(x + v.x, y + v.y); }
-	inline const Vector2 Vector2::operator - (const Vector2 & v) const { return Vector2(x - v.x, y - v.y); }
-	inline const Vector2 Vector2::operator * (const Vector2 & v) const { return Vector2(x * v.x, y * v.y); }
-	inline const Vector2 Vector2::operator / (const Vector2 & v) const { return Vector2(x / v.x, y / v.y); }
-
-	//VECTOR2 TO THIS OPERATIONS
-	inline Vector2 & Vector2::operator += (const Vector2 & v) { x += v.x; y += v.y; return *this; }
-	inline Vector2 & Vector2::operator -= (const Vector2 & v) { x -= v.x; y -= v.y; return *this; }
-	inline Vector2 & Vector2::operator *= (const Vector2 & v) { x *= v.x; y *= v.y; return *this; }
-	inline Vector2 & Vector2::operator /= (const Vector2 & v) { x /= v.x; y /= v.y; return *this; }
-
-	//SCALER TO VECTOR2 OPERATIONS
-	inline const Vector2 Vector2::operator + (float v) const { return Vector2(x + v, y + v); }
-	inline const Vector2 Vector2::operator - (float v) const { return Vector2(x - v, y - v); }
-	inline const Vector2 Vector2::operator * (float v) const { return Vector2(x * v, y * v); }
-	inline const Vector2 Vector2::operator / (float v) const { return Vector2(x / v, y / v); }
-
-	//SCALER TO THIS OPERATIONS
-	inline Vector2 & Vector2::operator += (float v) { x += v; y += v; return *this; }
-	inline Vector2 & Vector2::operator -= (float v) { x -= v; y -= v; return *this; }
-	inline Vector2 & Vector2::operator *= (float v) { x *= v; y *= v; return *this; }
-	inline Vector2 & Vector2::operator /= (float v) { x /= v; y /= v; return *this; }
-};
-
-vector<Vector2> subdivisionBuffer1;
-vector<Vector2> subdivisionBuffer2;
-const float tolerance = 0.25f;
-const float tolerance_sq = tolerance * tolerance;
-
-bool isFlatEnough(vector<Vector2> controlPoints)
-{
-	for (int i = 1; i < controlPoints.size() - 1; i++)
-		if ((controlPoints.at(i-1) - controlPoints.at(i) * 2.0f + controlPoints.at(i+1)).LengthSquared() > tolerance_sq * 4)
-			return false;
-
-	return true;
-}
-
-void subdivide(vector<Vector2> controlPoints, vector<Vector2> &l, vector<Vector2> &r, int count) {
-	vector<Vector2> midPoints = subdivisionBuffer1;
-	//int count = controlPoints.size();
-	for (int i = 0; i < count; ++i) {
-		midPoints[i] = controlPoints.at(i);
-	}
-
-	for (int i = 0; i < count; i++) {
-		l[i] = midPoints.at(0);
-		r[count - i - 1] = midPoints[count - i - 1];
-
-		for (int j = 0; j < count - i - 1; j++) {
-			midPoints.at(j) = (midPoints.at(j) + midPoints.at(j + 1)) / 2;
-		}
-	}
-}
-
-void approximate(vector<Vector2> controlPoints, vector<Vector2> &output, int count) {
-	vector<Vector2> l = subdivisionBuffer2;
-	vector<Vector2> r = subdivisionBuffer1;
-	//int count = controlPoints.size();
-	subdivide(controlPoints, l, r, count);
-	for (int i = 0; i < count - 1; ++i) {
-		l.at(count + 1) = r.at(i + 1);
-	}
-
-	output.push_back(controlPoints.at(0));
-	for (int i = 1; i < count - 1; ++i) {
-		int index = 2 * i;
-		Vector2 p = (l.at(index - 1) + l.at(index) * 2 + l.at(index + 1)) * 0.25f;
-		output.push_back(p);
-	}
-}
+//class Vector2
+//{
+//public:
+//	//MEMBERS
+//	float x;
+//	float y;
+//
+//	//CONSTRUCTORS
+//	Vector2(void) : x(0), y(0) { }
+//	Vector2(float xValue, float yValue) : x(xValue), y(yValue) { }
+//
+//	//DECONSTRUCTOR
+//	~Vector2(void) { };
+//
+//	//METHODS
+//
+//	float Length() const { return sqrt(x * x + y * y); }
+//	float LengthSquared() const { return x * x + y * y; }
+//	/*float Distance(const Vector2 & v) const;
+//	float DistanceSquared(const Vector2 & v) const;
+//	float Dot(const Vector2 & v) const;
+//	float Cross(const Vector2 & v) const;
+//
+//	Vector2 & Normal();
+//	Vector2 & Normalize();*/
+//
+//	//ASSINGMENT AND EQUALITY OPERATIONS
+//	inline Vector2 & Vector2::operator = (const Vector2 & v) { x = v.x; y = v.y; return *this; }
+//	inline Vector2 & Vector2::operator = (const float & f) { x = f; y = f; return *this; }
+//	inline Vector2 & Vector2::operator - (void) { x = -x; y = -y; return *this; }
+//	inline bool Vector2::operator == (const Vector2 & v) const { return (x == v.x) && (y == v.y); }
+//	inline bool Vector2::operator != (const Vector2 & v) const { return (x != v.x) || (y != v.y); }
+//
+//	//VECTOR2 TO VECTOR2 OPERATIONS
+//	inline const Vector2 Vector2::operator + (const Vector2 & v) const { return Vector2(x + v.x, y + v.y); }
+//	inline const Vector2 Vector2::operator - (const Vector2 & v) const { return Vector2(x - v.x, y - v.y); }
+//	inline const Vector2 Vector2::operator * (const Vector2 & v) const { return Vector2(x * v.x, y * v.y); }
+//	inline const Vector2 Vector2::operator / (const Vector2 & v) const { return Vector2(x / v.x, y / v.y); }
+//
+//	//VECTOR2 TO THIS OPERATIONS
+//	inline Vector2 & Vector2::operator += (const Vector2 & v) { x += v.x; y += v.y; return *this; }
+//	inline Vector2 & Vector2::operator -= (const Vector2 & v) { x -= v.x; y -= v.y; return *this; }
+//	inline Vector2 & Vector2::operator *= (const Vector2 & v) { x *= v.x; y *= v.y; return *this; }
+//	inline Vector2 & Vector2::operator /= (const Vector2 & v) { x /= v.x; y /= v.y; return *this; }
+//
+//	//SCALER TO VECTOR2 OPERATIONS
+//	inline const Vector2 Vector2::operator + (float v) const { return Vector2(x + v, y + v); }
+//	inline const Vector2 Vector2::operator - (float v) const { return Vector2(x - v, y - v); }
+//	inline const Vector2 Vector2::operator * (float v) const { return Vector2(x * v, y * v); }
+//	inline const Vector2 Vector2::operator / (float v) const { return Vector2(x / v, y / v); }
+//
+//	//SCALER TO THIS OPERATIONS
+//	inline Vector2 & Vector2::operator += (float v) { x += v; y += v; return *this; }
+//	inline Vector2 & Vector2::operator -= (float v) { x -= v; y -= v; return *this; }
+//	inline Vector2 & Vector2::operator *= (float v) { x *= v; y *= v; return *this; }
+//	inline Vector2 & Vector2::operator /= (float v) { x /= v; y /= v; return *this; }
+//};
+//
+//vector<Vector2> subdivisionBuffer1;
+//vector<Vector2> subdivisionBuffer2;
+//const float tolerance = 0.25f;
+//const float tolerance_sq = tolerance * tolerance;
+//
+//bool isFlatEnough(vector<Vector2> controlPoints)
+//{
+//	for (int i = 1; i < controlPoints.size() - 1; i++)
+//		if ((controlPoints.at(i-1) - controlPoints.at(i) * 2.0f + controlPoints.at(i+1)).LengthSquared() > tolerance_sq * 4)
+//			return false;
+//
+//	return true;
+//}
+//
+//void subdivide(vector<Vector2> controlPoints, vector<Vector2> &l, vector<Vector2> &r, int count) {
+//	vector<Vector2> midPoints = subdivisionBuffer1;
+//	//int count = controlPoints.size();
+//	for (int i = 0; i < count; ++i) {
+//		midPoints[i] = controlPoints.at(i);
+//	}
+//
+//	for (int i = 0; i < count; i++) {
+//		l[i] = midPoints.at(0);
+//		r[count - i - 1] = midPoints[count - i - 1];
+//
+//		for (int j = 0; j < count - i - 1; j++) {
+//			midPoints.at(j) = (midPoints.at(j) + midPoints.at(j + 1)) / 2;
+//		}
+//	}
+//}
+//
+//void approximate(vector<Vector2> controlPoints, vector<Vector2> &output, int count) {
+//	vector<Vector2> l = subdivisionBuffer2;
+//	vector<Vector2> r = subdivisionBuffer1;
+//	//int count = controlPoints.size();
+//	subdivide(controlPoints, l, r, count);
+//	for (int i = 0; i < count - 1; ++i) {
+//		l.at(count + 1) = r.at(i + 1);
+//	}
+//
+//	output.push_back(controlPoints.at(0));
+//	for (int i = 1; i < count - 1; ++i) {
+//		int index = 2 * i;
+//		Vector2 p = (l.at(index - 1) + l.at(index) * 2 + l.at(index + 1)) * 0.25f;
+//		output.push_back(p);
+//	}
+//}
 
 
 
 int main() {
-	POINT a1; a1.x = 173; a1.y = 353;
+	/*POINT a1; a1.x = 173; a1.y = 353;
 	POINT a2; a2.x = 129; a2.y=268;
 	POINT a3; a3.x = 153; a3.y= 186;
 	POINT a4; a4.x = 228; a4.y= 171;
@@ -237,7 +237,7 @@ int main() {
 	POINT b6 ; b6.x = 210; b6.y = -27;
 	POINT b7; b7.x = 291; b7.y = 70;
 	POINT b8 ; b8.x = 181; b8.y = 139;
-	POINT b9; b9.x = 78; b9.y = 157;
+	POINT b9; b9.x = 78; b9.y = 157;*/
 
 	//vector<Vector2> subControlPoints;
 	//vector<vector<Vector2>> controlPoints; // vector<Vector2>, not this
@@ -690,7 +690,7 @@ int main() {
 //cout << dict["testing"].at(0) << endl;
 
 //ifstream infile;
-string pathName = "C:\\Users\\ong\\AppData\\Local\\osu!\\osu!.db";
+//string pathName = "C:\\Users\\ong\\AppData\\Local\\osu!\\osu!.db";
 //unsigned int version;
 //unsigned int folderCount;
 //bool accountUnlocked;

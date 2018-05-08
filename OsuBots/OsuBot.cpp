@@ -119,7 +119,7 @@ void OsuBot::updateIsPlaying() {
 	}
 }
 // -------------------------------------------Gameplay related functions----------------------------------------
-
+// credit to Andrey Tokarev (CoderOffka) https://github.com/CoderOffka/osuAutoBot/blob/master/main.cpp
 void OsuBot::setCursorStartPoints() { // TODO: set this in thread and run in background to detect sizechange 
 	RECT rect;
 	GetClientRect((this)->windowHandle, &rect);

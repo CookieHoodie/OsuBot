@@ -19,7 +19,7 @@ typedef struct OsuDbBeatmapData // assume version >= 20140609
 {
 	unsigned int bytesOfBeatmapEntry;
 	string artistName;
-	string artistNameUnicode; // assign in format: u8"artistName"
+	string artistNameUnicode;
 	string songTitle;
 	string songTitleUnicode;
 	string creatorName;

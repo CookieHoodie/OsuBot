@@ -1,6 +1,6 @@
 #include "SigScanner.h"
 
-
+// credit to Aixxe from https://aixxe.net/2016/10/osu-game-hacking
 DWORD SigScanner::findPattern(HANDLE processHandle, const unsigned char pattern[], const char* mask, const int offset, size_t begin) {
 	// pattern in format: unsigned char pattern[] = { 0x90, 0xFF, 0xEE };
 	// mask in format: char* mask = "xxx?xxx";
