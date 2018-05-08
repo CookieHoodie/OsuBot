@@ -5,4 +5,4 @@ Please use this for educational purpose, not real cheating in the game.
 
 Most of the codes come with comments, but feel free to ask me if you have any question regarding the code!
 
-## Documentation is coming soon
+## Tutorial will be made once this project is done
