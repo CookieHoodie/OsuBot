@@ -35,4 +35,9 @@ Change the constant OSUROOTPATH in beatmapRelatedStructs.h to match your path
 
 Change LEFT_KEY and RIGHT_KEY in Input.cpp to match your hitkeys
 
+# Support
+If you find this useful, please support me to help me get a better laptop! It's a pain in the butt to program using this crappy laptop but I can't afford to buy one cuz I'm still a student :(
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://paypal.me/CookieHoodie/0USD)
+
 ## Tutorial will be made once this project is done
