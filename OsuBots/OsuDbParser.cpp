@@ -287,10 +287,10 @@ void OsuDbParser::processDataMin(string fullPathToOsuDb) {
 			//beatmap.gradeTaiko = (this)->readChar(osuDbHandle);
 			//beatmap.gradeCTB = (this)->readChar(osuDbHandle);
 			//beatmap.gradeMania = (this)->readChar(osuDbHandle);
-			//beatmap.localOffset = (this)->readShort(osuDbHandle);
+			beatmap.localOffset = (this)->readShort(osuDbHandle);
 			//beatmap.stackLeniency = (this)->readFloat(osuDbHandle);
 			//beatmap.gameplayMode = (this)->readChar(osuDbHandle);
-			(this)->skipBytes(osuDbHandle, sizeof(int) + sizeof(char) * 5 + sizeof(short) + sizeof(float), false);
+			(this)->skipBytes(osuDbHandle, sizeof(int) + sizeof(char) * 5 + sizeof(float), false);
 			//beatmap.songSource = (this)->readString(osuDbHandle);
 			(this)->skipBytes(osuDbHandle);
 			//beatmap.songTags = (this)->readString(osuDbHandle);

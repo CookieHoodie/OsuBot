@@ -111,12 +111,23 @@ void OsuBot::updateIsPlaying() {
 	// this function is only called when beatmap is detected
 	// so first set isPlaying to true and then check if it's still true
 	(this)->isPlaying = true;
+	// variable for checking if the time "decreases", which means the player replay the map
+	int lastInstance = (this)->getCurrentAudioTime(); 
 	while (true) {
 		if (ProcessTools::getWindowTextString((this)->windowTitleHandle) == "osu!") {
 			// if map is exited, set isPlaying to false and exit this loop (and this thread)
 			(this)->isPlaying = false;
 			return;
 		}
+		int currentTime = (this)->getCurrentAudioTime();
+		// constantly check if map is replayed
+		// Becuz the audioTime actually starts from -ve number when starting the map, >= 0 so that it won't go into this condition at the start of the map
+		if (currentTime < lastInstance && currentTime >= 0) {
+			(this)->isPlaying = false;
+			return;
+		}
+		// if currentTime is increasing, set lastInstance to currentTime for comparision in next loop
+		lastInstance = currentTime;
 		Sleep(100);
 	}
 }
@@ -444,7 +455,12 @@ void OsuBot::start() {
 		cout << choice << endl;
 		system("cls");
 		cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
-
+		
+		// more comprehensive checking var for unique title
+		string lastFullPathAfterSongFolder = "";
+		// less accurate checking var for non-unique title
+		string lastTitle = "";
+		vector<Beatmap> lastPlayedBeatmap;
 		while (true) {
 			// Detect ESC key asynchronously to let user go back to menu to choose mod
 			if (GetAsyncKeyState(VK_ESCAPE) && (GetConsoleWindow() == GetForegroundWindow())) {
@@ -457,12 +473,25 @@ void OsuBot::start() {
 			if (currentTitle != "osu!") { // if map is played
 				auto beatmapVec = (this)->osuDbMin.beatmapsMin.at(currentTitle);
 				if (beatmapVec.size() == 1) { // if the map played is unique in its title name
-											  // formating for parsing to Beatmap class later
+					// formating for parsing to Beatmap class later
 					string fullPathAfterSongFolder = beatmapVec.at(0).folderName + "\\" + beatmapVec.at(0).nameOfOsuFile;
 					// run in a new thread checking if the map is still playing
 					thread checkIfIsPlaying(&OsuBot::updateIsPlaying, this);
 					cout << "Beatmap detected. Loading beatmap..." << endl;
-					Beatmap b = Beatmap(fullPathAfterSongFolder);
+					// if new beatmap is detected
+					if (lastFullPathAfterSongFolder != fullPathAfterSongFolder) { 
+						// set previous beatmap to this beatmap
+						lastFullPathAfterSongFolder = fullPathAfterSongFolder;
+						// set previous title to current title for non-unique maps
+						lastTitle = currentTitle;
+						// If this is not the 1st played beatmap (ie. vector not empty), pop_back so that last beatmap is discarded
+						if (lastPlayedBeatmap.size() != 0) {
+							lastPlayedBeatmap.pop_back();
+						}
+						// then store the current beatmap into the vector
+						lastPlayedBeatmap.push_back(Beatmap(fullPathAfterSongFolder));
+					}
+					Beatmap b = lastPlayedBeatmap.back();
 					if (b.allSet) {
 						// start the bot
 						cout << "Starting: " << beatmapVec.at(0).nameOfOsuFile << endl;
@@ -486,52 +515,68 @@ void OsuBot::start() {
 					cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
 				}
 				else { // if multiple maps have same title
-					   // bring the console to foreground for user to pick the correct map
-					HWND consoleHandle = GetConsoleWindow();
-					if (SetForegroundWindow(consoleHandle)) {
-						cout << "Multiple files are detected. Please pick the correct map: " << endl;
-						for (int index = 0; index < beatmapVec.size(); index++) {
-							cout << index + 1 << ") " << beatmapVec.at(index).nameOfOsuFile << endl;
-						}
-						cout << "Choice: ";
-						cin >> input;
-						while (!(all_of(input.begin(), input.end(), isdigit)) || (stoi(input) < 1 || stoi(input) > beatmapVec.size())) {
-							cout << "Invalid input. Please enter again." << endl;
+					// check if it's retry. if it is, don't prompt for selection again
+					// note that however if two beatmaps with same title were played subsequently, the PREVIOUS map (wrong map) would be played instead
+					// if wrong choice is made same thing would happen also. In that case, return to menu to reset the program
+					if (lastTitle != currentTitle || lastTitle == "") {
+						// bring the console to foreground for user to pick the correct map
+						HWND consoleHandle = GetConsoleWindow();
+						if (SetForegroundWindow(consoleHandle)) {
+							cout << "Multiple files are detected. Please pick the correct map: " << endl;
 							for (int index = 0; index < beatmapVec.size(); index++) {
 								cout << index + 1 << ") " << beatmapVec.at(index).nameOfOsuFile << endl;
 							}
 							cout << "Choice: ";
 							cin >> input;
-						}
-						auto chosenMap = beatmapVec.at(stoi(input) - 1);
-						string fullPathAfterSongFolder = chosenMap.folderName + "\\" + chosenMap.nameOfOsuFile;
-						thread checkIfIsPlaying(&OsuBot::updateIsPlaying, this);
-						cout << "Loading beatmap..." << endl;
-						Beatmap b = Beatmap(fullPathAfterSongFolder);
-						if (b.allSet) {
-							cout << "Starting: " << chosenMap.nameOfOsuFile << endl;
-							switch (choice) {
-							case 1:
-								(this)->modAuto(b);
-								break;
-							case 2:
-								(this)->modAutoPilot(b);
-								break;
-							case 3:
-								(this)->modRelax(b);
-								break;
+							while (!(all_of(input.begin(), input.end(), isdigit)) || (stoi(input) < 1 || stoi(input) > beatmapVec.size())) {
+								cout << "Invalid input. Please enter again." << endl;
+								for (int index = 0; index < beatmapVec.size(); index++) {
+									cout << index + 1 << ") " << beatmapVec.at(index).nameOfOsuFile << endl;
+								}
+								cout << "Choice: ";
+								cin >> input;
 							}
-							checkIfIsPlaying.join();
-							cout << "Ending: " << chosenMap.nameOfOsuFile << endl << endl;
+							auto chosenMap = beatmapVec.at(stoi(input) - 1);
+							string fullPathAfterSongFolder = chosenMap.folderName + "\\" + chosenMap.nameOfOsuFile;
+							// set previous beatmap to this beatmap for unique map references
+							lastFullPathAfterSongFolder = fullPathAfterSongFolder;
+							// update last title
+							lastTitle = currentTitle;
+							// If this is not the 1st played beatmap (ie. vector not empty), pop_back so that last beatmap is discarded
+							if (lastPlayedBeatmap.size() != 0) {
+								lastPlayedBeatmap.pop_back();
+							}
+							// then store the current beatmap into the vector
+							lastPlayedBeatmap.push_back(Beatmap(fullPathAfterSongFolder));
 						}
 						else {
-							throw OsuBotException("Error loading beatmap: " + b.fullPathBeatmapFileName);
+							cout << "Failed to bring console to foreground." << endl;
+							continue;
 						}
-						cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
+					}
+					thread checkIfIsPlaying(&OsuBot::updateIsPlaying, this);
+					cout << "Loading beatmap..." << endl;
+					Beatmap b = lastPlayedBeatmap.back();
+					if (b.allSet) {
+						cout << "Starting: " << Functions::split(b.fullPathBeatmapFileName, '\\').back() << endl;
+						switch (choice) {
+						case 1:
+							(this)->modAuto(b);
+							break;
+						case 2:
+							(this)->modAutoPilot(b);
+							break;
+						case 3:
+							(this)->modRelax(b);
+							break;
+						}
+						checkIfIsPlaying.join();
+						cout << "Ending: " << Functions::split(b.fullPathBeatmapFileName, '\\').back() << endl << endl;
 					}
 					else {
-						cout << "Failed to bring console to foreground." << endl;
+						throw OsuBotException("Error loading beatmap: " + b.fullPathBeatmapFileName);
 					}
+					cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
 				}
 			}
 			Sleep(200); // Check for title every 0.2 sec

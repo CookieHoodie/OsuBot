@@ -142,14 +142,25 @@ void HitObject::calcAndSetPointsOnCurve() {
 		auto cSq = pow(ax - bx, 2) + pow(ay - by, 2);
 
 		// Account for "degenerate triangle" curve according to official code
-		// *I've also appended my own calculation as the official one doesn't seem to work in my case
-		// which checks if the circle is almost like linear
-		if (Functions::almostEquals(aSq, 0) || Functions::almostEquals(bSq, 0) || Functions::almostEquals(cSq, 0) || Functions::almostEquals(sqrt(bSq), sqrt(aSq) + sqrt(cSq))) {
-			/*(this)->sliderType = 'B';
+		if (Functions::almostEquals(aSq, 0) || Functions::almostEquals(bSq, 0) || Functions::almostEquals(cSq, 0)) {
+			(this)->sliderType = 'B';
 			(this)->calcAndSetPointsOnCurve();
-			(this)->sliderType = 'P';*/
+			(this)->sliderType = 'P';
+			return;
+		}
+
+		auto linearDistance = sqrt(bSq);
+		auto circleDistance = sqrt(aSq) + sqrt(cSq);
+		// own calculation which checks if the circle is almost like linear
+		if (Functions::almostEquals(linearDistance, circleDistance)) { // tolerance = 0.25
 			(this)->sliderType = 'L'; // fake that this slider is Linear
-			// so far faking to 'L' is fine, but if encountered any bug later, consider fallback to 'B' instead
+			return;
+		}
+		// not so linear but still quite linear
+		else if (Functions::almostEquals(linearDistance, circleDistance, 0.5)) {
+			(this)->sliderType = 'B';
+			(this)->calcAndSetPointsOnCurve();
+			(this)->sliderType = 'P';
 			return;
 		}
 
