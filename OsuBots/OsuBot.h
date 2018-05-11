@@ -4,6 +4,7 @@
 #include <thread>
 #include <windows.h>
 #include <iostream>  
+#include <future>
 
 #include "ProcessTools.h"
 #include "SigScanner.h"
@@ -43,7 +44,7 @@ public:
 
 	// -----------------------Testing area, delete when finished------------------------------
 	void testTime();
-	void loadBeatmap(string fileName); // should be loaded automatically
+	void loadBeatmap(string fileName); 
 	// -------------------------End of testing area--------------------------------------
 private:
 	// --------------------------variables-----------------------------
@@ -78,8 +79,11 @@ private:
 	POINT getScaledPoints(int x, int y);
 
 	// Mods
-	void modRelax(Beatmap beatmap);
-	void modAutoPilot(Beatmap beatmap); 
-	void modAuto(Beatmap beatmap);
+	void modRelax(Beatmap beatmap, unsigned int mod);
+	void modAutoPilot(Beatmap beatmap, unsigned int mod); 
+	void modAuto(Beatmap beatmap, unsigned int mod);
+
+	// Calculations
+	void calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int mod, future<void> futureObj);
 };
 

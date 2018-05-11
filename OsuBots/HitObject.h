@@ -35,6 +35,7 @@ public:
 	vector<vector<CurvePointsS>> CurvePoints;
 	int repeat;
 	float pixelLength;
+	bool sliderPointsAreCalculated;
 	// calculated variables
 	int sliderDuration;
 	vector<POINT> pointsOnCurve;
@@ -50,9 +51,9 @@ private:
 	// calculate timing points related
 	float getRealCurrentMPB(int hitObjectTime, vector<TimingPoint> TimingPoints, int* timingPointIndex);
 	// calculate sliders' pointsOnCurve
-	void calcAndSetPointsOnCurve();
+	//void calcAndSetPointsOnCurve();
 	// bezier curve calculations
-	static double binomialCoef(int n, int k);
-	static POINT bezierCurve(vector<CurvePointsS> curvePointsV, float t); 
+	//static double binomialCoef(int n, int k);
+	//static POINT bezierCurve(vector<CurvePointsS> curvePointsV, float t); 
 };
 

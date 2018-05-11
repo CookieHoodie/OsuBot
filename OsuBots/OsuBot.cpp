@@ -197,8 +197,17 @@ POINT OsuBot::getScaledPoints(int x, int y) {
 }
 
 // -------------------------------------------Mods-------------------------------------------------
-void OsuBot::modRelax(Beatmap beatmap) {
+void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 	if ((this)->isPlaying == false) { return; }
+	if (mod == 16) { // if hardrock, calculate new hitwindow
+		float newOD = beatmap.Difficulty.overallDifficulty * 1.4;
+		if (newOD > 10) {
+			newOD = 10;
+		}
+		beatmap.timeRange50 = abs(150 + 50 * (5 - newOD) / 5);
+		beatmap.timeRange100 = abs(100 + 40 * (5 - newOD) / 5);
+		beatmap.timeRange300 = abs(50 + 30 * (5 - newOD) / 5);
+	}
 	bool leftKeysTurn = true;
 	for (auto hitObject : beatmap.HitObjects) {
 		// loop for waiting till timing to press comes
@@ -260,17 +269,39 @@ void OsuBot::modRelax(Beatmap beatmap) {
 	Input::sentKeyInput(Input::RIGHT_KEY, false);
 }
 
-void OsuBot::modAutoPilot(Beatmap beatmap) { 
+void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) { 
 	if ((this)->isPlaying == false) { return; }
+	// create exitSignal to be sent to setPointsOnCurveThread so that if map is not being played, the calculation can stop immediately
+	// refer to http://thispointer.com/c11-how-to-stop-or-terminate-a-thread/ if have any doubt
+	promise<void> exitSignal;
+	future<void> futureObj = exitSignal.get_future();
+	// ref() is necessary for passing by ref in thread
+	// start the thread to start calculating slider points
+	thread setPointsOnCurveThread(&OsuBot::calcAndSetPointsOnCurve, this, ref(beatmap.HitObjects), mod, move(futureObj));
 	POINT center = (this)->getScaledPoints(256, 192); // 256, 192 is always the center of osu virtual screen
 											 
 	// move to first hitObject when the beatmap starts
 	HitObject firstHitObject = beatmap.HitObjects.front();
+	if (mod == 16) {
+		firstHitObject.y = 384 - firstHitObject.y;
+		// and calculate new hitwindow here
+		float newOD = beatmap.Difficulty.overallDifficulty * 1.4;
+		if (newOD > 10) {
+			newOD = 10;
+		}
+		beatmap.timeRange50 = abs(150 + 50 * (5 - newOD) / 5);
+		beatmap.timeRange100 = abs(100 + 40 * (5 - newOD) / 5);
+		beatmap.timeRange300 = abs(50 + 30 * (5 - newOD) / 5);
+	}
 	// "-300" and "250" following are the preset adjustments as to when the cursor should move
 	while ((this)->getCurrentAudioTime() < firstHitObject.time - 300) {
 		// while waiting for the time to hit hitObject, constantly check if the map is still being played
 		// if it's not, break out of this function to end the map
-		if ((this)->isPlaying == false) { return; }
+		if ((this)->isPlaying == false) {
+			exitSignal.set_value(); // signal thread to stop
+			setPointsOnCurveThread.join(); // join thread before returning (or else error)
+			return;
+		}
 	}
 	POINT startPoint = (this)->getScaledPoints(firstHitObject.x, firstHitObject.y);
 	// determine current cursor position and move from there to the firstHitObject
@@ -280,18 +311,45 @@ void OsuBot::modAutoPilot(Beatmap beatmap) {
 
 	// starting of first to last hitObject
 	for (int i = 1; i < beatmap.HitObjects.size(); i++) {
-		if ((this)->isPlaying == false) { return; }
+		if ((this)->isPlaying == false) {
+			exitSignal.set_value(); // signal thread to stop
+			setPointsOnCurveThread.join(); // join thread before returning (or else error)
+			return;
+		}
 		HitObject currentHitObject = beatmap.HitObjects.at(i - 1);
 		HitObject nextHitObject = beatmap.HitObjects.at(i);
+		if (mod == 16) {
+			currentHitObject.y = 384 - currentHitObject.y;
+			nextHitObject.y = 384 - nextHitObject.y;
+		}
 		POINT currentPoint = (this)->getScaledPoints(currentHitObject.x, currentHitObject.y);
 		POINT nextPoint = (this)->getScaledPoints(nextHitObject.x, nextHitObject.y);
 		// at this point, the cursor is already on the hitObject.
 		// so, to allow for longer range of hit time, wait until the time exceeds the time range of 300 points, then move
 		while ((this)->getCurrentAudioTime() < currentHitObject.time + beatmap.timeRange300 - 3) {
-			if ((this)->isPlaying == false) { return; }
+			if ((this)->isPlaying == false) {
+				exitSignal.set_value(); // signal thread to stop
+				setPointsOnCurveThread.join(); // join thread before returning (or else error)
+				return;
+			}
 		}
 
 		if (currentHitObject.type == HitObject::TypeE::slider) {
+			// it's not known by this time if the thread has calculated the points on this slider,
+			// so check and wait for it if it hasn't
+			if (beatmap.HitObjects.at(i - 1).sliderPointsAreCalculated == false) {
+				while (true) {
+					if (beatmap.HitObjects.at(i - 1).sliderPointsAreCalculated) {
+						break;
+					}
+				}
+				// then rewrite currentHitObject to get the calculated points
+				currentHitObject = beatmap.HitObjects.at(i - 1);
+				// if it's hardrock, the previous calculation on currentHitObject.y has been overwritten, so calculate again
+				if (mod == 16) {
+					currentHitObject.y = 384 - currentHitObject.y;
+				}
+			}
 			// move slider regardless of type and after reaching the slider end, move linearly to next hitObject
 			// the duration of moving linearly is divide by 2 to reduce latency and also improve readability
 			POINT endPoint = Input::sliderMove(currentHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
@@ -310,8 +368,15 @@ void OsuBot::modAutoPilot(Beatmap beatmap) {
 
 	// play last hitObject as it is not played in the loop (if it's circle then it's already done)
 	HitObject lastHitObject = beatmap.HitObjects.back();
+	if (mod == 16) {
+		lastHitObject.y = 384 - lastHitObject.y;
+	}
 	while ((this)->getCurrentAudioTime() < lastHitObject.time + beatmap.timeRange300 - 3) {
-		if ((this)->isPlaying == false) { return; }
+		if ((this)->isPlaying == false) {
+			exitSignal.set_value(); // signal thread to stop
+			setPointsOnCurveThread.join(); // join thread before returning (or else error)
+			return;
+		}
 	}
 	if (lastHitObject.type == HitObject::TypeE::slider) {
 		Input::sliderMove(lastHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
@@ -320,20 +385,35 @@ void OsuBot::modAutoPilot(Beatmap beatmap) {
 		POINT center = (this)->getScaledPoints(256, 192);
 		Input::spinnerMove(center, lastHitObject.spinnerEndTime - lastHitObject.time);
 	}
+	setPointsOnCurveThread.join(); // dun forget to join the thread b4 exiting
 }
 
-void OsuBot::modAuto(Beatmap beatmap) { 
+void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) { 
 	if ((this)->isPlaying == false) { return; }
+	// create exitSignal to be sent to setPointsOnCurveThread so that if map is not being played, the calculation can stop immediately
+	// refer to http://thispointer.com/c11-how-to-stop-or-terminate-a-thread/ if have any doubt
+	promise<void> exitSignal;
+	future<void> futureObj = exitSignal.get_future();
+	// ref() is necessary for passing by ref in thread
+	// start the thread to start calculating slider points
+	thread setPointsOnCurveThread(&OsuBot::calcAndSetPointsOnCurve, this, ref(beatmap.HitObjects), mod, move(futureObj));
 	POINT center = (this)->getScaledPoints(256, 192); // 256, 192 is always the center of osu virtual screen
 	bool leftKeysTurn = true;
 
 	// move to first hitObject when the beatmap starts
 	HitObject firstHitObject = beatmap.HitObjects.front();
+	if (mod == 16) {
+		firstHitObject.y = 384 - firstHitObject.y;
+	}
 	// "-300" and "250" following are the preset adjustments as to when the cursor should move
 	while ((this)->getCurrentAudioTime() < firstHitObject.time - 300) {
 		// while waiting for the time to hit hitObject, constantly check if the map is still being played
 		// if it's not, break out of this function to end the map
-		if ((this)->isPlaying == false) { return; }
+		if ((this)->isPlaying == false) { 
+			exitSignal.set_value(); // signal thread to stop
+			setPointsOnCurveThread.join(); // join thread before returning (or else error)
+			return; 
+		}
 	}
 	POINT startPoint = (this)->getScaledPoints(firstHitObject.x, firstHitObject.y);
 	// determine current cursor position and move from there to the firstHitObject
@@ -343,14 +423,26 @@ void OsuBot::modAuto(Beatmap beatmap) {
 	
 	// starting of first to last hitObject
 	for (int i = 1; i < beatmap.HitObjects.size(); i++) {
-		if ((this)->isPlaying == false) { return; }
+		if ((this)->isPlaying == false) {
+			exitSignal.set_value();
+			setPointsOnCurveThread.join();
+			return;
+		}
 		HitObject currentHitObject = beatmap.HitObjects.at(i - 1);
 		HitObject nextHitObject = beatmap.HitObjects.at(i);
+		if (mod == 16) {
+			currentHitObject.y = 384 - currentHitObject.y;
+			nextHitObject.y = 384 - nextHitObject.y;
+		}
 		POINT currentPoint = (this)->getScaledPoints(currentHitObject.x, currentHitObject.y);
 		POINT nextPoint = (this)->getScaledPoints(nextHitObject.x, nextHitObject.y);
 		// at this point, the cursor is already on the hitObject.
 		while ((this)->getCurrentAudioTime() < currentHitObject.time) {
-			if ((this)->isPlaying == false) { return; }
+			if ((this)->isPlaying == false) {
+				exitSignal.set_value();
+				setPointsOnCurveThread.join();
+				return;
+			}
 		}
 		// press key when reach the time
 		if (leftKeysTurn) {
@@ -361,6 +453,21 @@ void OsuBot::modAuto(Beatmap beatmap) {
 		}
 		
 		if (currentHitObject.type == HitObject::TypeE::slider) {
+			// it's not known by this time if the thread has calculated the points on this slider,
+			// so check and wait for it if it hasn't
+			if (beatmap.HitObjects.at(i - 1).sliderPointsAreCalculated == false) {
+				while (true) {
+					if (beatmap.HitObjects.at(i - 1).sliderPointsAreCalculated) {
+						break;
+					}
+				}
+				// then rewrite currentHitObject to get the calculated points
+				currentHitObject = beatmap.HitObjects.at(i - 1);
+				// if it's hardrock, the previous calculation on currentHitObject.y has been overwritten, so calculate again
+				if (mod == 16) {
+					currentHitObject.y = 384 - currentHitObject.y;
+				}
+			}
 			// move slider regardless of type and after reaching the slider end, move linearly to next hitObject
 			// the duration of moving linearly is divide by 2 to reduce latency and also improve readability
 			POINT endPoint = Input::sliderMove(currentHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
@@ -408,8 +515,15 @@ void OsuBot::modAuto(Beatmap beatmap) {
 
 	// play last hitObject as it is not played in the loop (if it's circle then it's already done)
 	HitObject lastHitObject = beatmap.HitObjects.back();
-	while ((this)->getCurrentAudioTime() < lastHitObject.time + beatmap.timeRange300 - 3) {
-		if ((this)->isPlaying == false) { return; }
+	if (mod == 16) {
+		lastHitObject.y = 384 - lastHitObject.y;
+	}
+	while ((this)->getCurrentAudioTime() < lastHitObject.time) {
+		if ((this)->isPlaying == false) {
+			exitSignal.set_value();
+			setPointsOnCurveThread.join();
+			return;
+		}
 	}
 	if (leftKeysTurn) {
 		Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
@@ -419,6 +533,18 @@ void OsuBot::modAuto(Beatmap beatmap) {
 	}
 
 	if (lastHitObject.type == HitObject::TypeE::slider) {
+		// it's quite unlikely to have not done calculation by this time, so omit this for program size sake
+		/*if (beatmap.HitObjects.back().sliderPointsAreCalculated == false) {
+			while (true) {
+				if (beatmap.HitObjects.back().sliderPointsAreCalculated) {
+					break;
+				}
+			}
+			lastHitObject = beatmap.HitObjects.back();
+			if (mod == 16) {
+				lastHitObject.y = 384 - lastHitObject.y;
+			}
+		}*/
 		Input::sliderMove(lastHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
 	}
 	else if (lastHitObject.type == HitObject::TypeE::spinner) {
@@ -430,17 +556,217 @@ void OsuBot::modAuto(Beatmap beatmap) {
 	// release both key to prevent unwanted behaviour
 	Input::sentKeyInput(Input::LEFT_KEY, false);
 	Input::sentKeyInput(Input::RIGHT_KEY, false);
+	setPointsOnCurveThread.join(); // dun forget to join the thread b4 exiting
+}
+
+// for threading
+// futureObj is simply stop signal from parent thread
+void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int mod, future<void> futureObj) {
+	for (int index = 0; index < HitObjects.size(); index++) {
+		// in each loop, check if stop signal is sent from the calling thread and stop calculating if true
+		if (futureObj.wait_for(chrono::milliseconds(0)) != future_status::timeout) {
+			return;
+		}
+		// hitObject is a copy, HitObjects.at(index) is a reference
+		auto hitObject = HitObjects.at(index);
+		if (hitObject.type == HitObject::TypeE::slider) {
+			if (hitObject.sliderType == 'P') {
+				// calculation for 'P' type slider
+				// this is the translation of code from official code: https://github.com/ppy/osu/blob/master/osu.Game/Rulesets/Objects/CircularArcApproximator.cs
+				const float tolerance = 0.1f;
+				const double PI = 4 * atan(1);
+
+				CurvePointsS a = hitObject.CurvePoints.at(0).at(0); // start
+				CurvePointsS b = hitObject.CurvePoints.at(0).at(1); // pass through
+				CurvePointsS c = hitObject.CurvePoints.at(0).at(2); // end
+
+				// account for hardrock mod
+				if (mod == 16) {
+					a.y = 384 - a.y;
+					b.y = 384 - b.y;
+					c.y = 384 - c.y;
+				}
+
+				// As there's no Vector2 data type in c++, I calculate each vector separately as x and y
+				float ax = a.x;
+				float ay = a.y;
+				float bx = b.x;
+				float by = b.y;
+				float cx = c.x;
+				float cy = c.y;
+
+				// square of distance btw each point
+				auto aSq = pow(bx - cx, 2) + pow(by - cy, 2);
+				auto bSq = pow(ax - cx, 2) + pow(ay - cy, 2);
+				auto cSq = pow(ax - bx, 2) + pow(ay - by, 2);
+
+				// Account for "degenerate triangle" curve according to official code
+				if (Functions::almostEquals(aSq, 0) || Functions::almostEquals(bSq, 0) || Functions::almostEquals(cSq, 0)) {
+					HitObjects.at(index).sliderType = 'B'; // fake sliderType to 'B'
+					index--; // decrease index by 1 so that next loop goes to same hitObject but this time goes into 'B' if block
+					continue;
+				}
+
+				auto linearDistance = sqrt(bSq);
+				auto circleDistance = sqrt(aSq) + sqrt(cSq);
+				// own calculation which checks if the circle is almost like linear
+				if (Functions::almostEquals(linearDistance, circleDistance)) { // tolerance = 0.25
+					HitObjects.at(index).sliderType = 'L'; // fake that this slider is Linear
+					if (mod == 16) {
+						HitObjects.at(index).CurvePoints.front().front().y = 384 - HitObjects.at(index).CurvePoints.front().front().y;
+						HitObjects.at(index).CurvePoints.front().back().y = 384 - HitObjects.at(index).CurvePoints.front().back().y;
+					}
+					HitObjects.at(index).sliderPointsAreCalculated = true;
+					continue;
+				}
+				// not so linear but still quite linear
+				else if (Functions::almostEquals(linearDistance, circleDistance, 0.5)) {
+					HitObjects.at(index).sliderType = 'B';
+					/*vector<HitObject> tempHitObject;
+					tempHitObject.push_back(hitObject);
+					(this)->calcAndSetPointsOnCurve(tempHitObject, mod, move(futureObj));
+					tempHitObject.front().sliderType = 'P';
+					HitObjects.at(index) = tempHitObject.front();*/
+					index--;
+					continue;
+				}
+
+				float s = aSq * (bSq + cSq - aSq);
+				float t = bSq * (aSq + cSq - bSq);
+				float u = cSq * (aSq + bSq - cSq);
+
+				float sum = s + t + u;
+
+				if (Functions::almostEquals(sum, 0)) {
+					HitObjects.at(index).sliderType = 'B';
+					index--;
+					continue;
+				}
+
+				// get the center of the circle
+				float centerx = (s * ax + t * bx + u * cx) / sum;
+				float centery = (s * ay + t * by + u * cy) / sum;
+
+				float dAx = ax - centerx;
+				float dAy = ay - centery;
+
+				float dCx = cx - centerx;
+				float dCy = cy - centery;
+
+				// radius
+				float r = sqrt(dAx * dAx + dAy * dAy);
+
+				double thetaStart = atan2(dAy, dAx);
+				double thetaEnd = atan2(dCy, dCx);
+
+				while (thetaEnd < thetaStart)
+					thetaEnd += 2 * PI;
+
+				double dir = 1;
+				double thetaRange = thetaEnd - thetaStart;
+
+				float orthoAtoCxTemp = cx - ax;
+				float orthoAtoCyTemp = cy - ay;
+				float orthoAtoCx = orthoAtoCyTemp;
+				float orthoAtoCy = -orthoAtoCxTemp;
+
+				auto dot = orthoAtoCx * (bx - ax) + orthoAtoCy * (by - ay);
+				if (dot < 0)
+				{
+					dir = -dir;
+					thetaRange = 2 * 4 * atan(1) - thetaRange;
+				}
+
+				int amountPoints = 2 * r <= tolerance ? 2 : max(2, (int)ceil(thetaRange / (2 * acos(1 - tolerance / r))));
+				for (int i = 0; i < amountPoints; ++i)
+				{
+					double fract = (double)i / (amountPoints - 1);
+					double theta = thetaStart + dir * fract * thetaRange;
+					// moving across the circle bit by bit
+					float ox = cos(theta) * r;
+					float oy = sin(theta) * r;
+					POINT p;
+					p.x = centerx + ox;
+					p.y = centery + oy;
+					// straight away update the referenced object
+					HitObjects.at(index).pointsOnCurve.push_back(p);
+				}
+				HitObjects.at(index).sliderPointsAreCalculated = true;
+			}
+			else if (hitObject.sliderType == 'L') {
+				if (mod == 16) {
+					HitObjects.at(index).CurvePoints.front().front().y = 384 - HitObjects.at(index).CurvePoints.front().front().y;
+					HitObjects.at(index).CurvePoints.front().back().y = 384 - HitObjects.at(index).CurvePoints.front().back().y;
+				}
+				HitObjects.at(index).sliderPointsAreCalculated = true;
+			}
+			else {
+				// if not Perfect circle, calculate using bezier function
+				// Getting points on bezier curve is easy but making them having same velocity is hard
+				// the easiest way here is to get the passing points on curve, 
+				// and then move from each point a fixed distance and store the equidistant points into another array
+				// refer to: https://love2d.org/forums/viewtopic.php?t=82612
+				// May consider using another method for optimization 
+
+				vector<POINT> pointsOnCurve; // store points on the bezier curve in 1st loop
+
+				double distanceConst = 0.5; // define step size. large == inaccurate and vice versa
+
+				// If no idea abt what is going on here, google bezier curve calculation
+				for (auto curvePointsV : hitObject.CurvePoints) {
+					// change all y coordinates in CurvePoints if hardrock mod
+					if (mod == 16) {
+						for (int i = 0; i < curvePointsV.size(); i++) {
+							curvePointsV.at(i).y = 384 - curvePointsV.at(i).y;
+						}
+					}
+					for (float t = 0; t <= 1; t += 0.01) {
+						POINT p = Functions::bezierCurve(curvePointsV, t);
+						pointsOnCurve.push_back(p);
+						int sizeOfVector = pointsOnCurve.size();
+						// if there are already more than 2 points calculated, it's time to calculate their distances
+						if (sizeOfVector > 1) {
+							POINT previousPoint = pointsOnCurve.at(sizeOfVector - 2);
+							auto distance = sqrt(pow(p.y - previousPoint.y, 2) + pow(p.x - previousPoint.x, 2));
+							// directly calculate equidistant points
+							POINT vec;
+							// getting direction of currentPoint
+							vec.x = p.x - previousPoint.x;
+							vec.y = p.y - previousPoint.y;
+							// calculate unit vector for moving
+							auto unitVectorX = vec.x / (sqrt(vec.x * vec.x + vec.y * vec.y));
+							auto unitvectorY = vec.y / (sqrt(vec.x * vec.x + vec.y * vec.y));
+							// move for distanceConst in the direction to next PointOnCurve
+							while (distance >= distanceConst) {
+								POINT equalDistancePoint;
+								equalDistancePoint.x = previousPoint.x + distanceConst * unitVectorX;
+								equalDistancePoint.y = previousPoint.y + distanceConst * unitvectorY;
+								// store the equidistant points into member var
+								HitObjects.at(index).pointsOnCurve.push_back(p);
+								distance -= distanceConst;
+							}
+						}
+						else { // store 1st point into member var no matter what
+							HitObjects.at(index).pointsOnCurve.push_back(p);
+						}
+					}
+				}
+				HitObjects.at(index).sliderPointsAreCalculated = true;
+			}
+		}
+	}
 }
 
 void OsuBot::start() {
 	while (true) {
 		system("cls"); // clear the console screen
-		int choice = 0;
+		int botChoice = 0;
+		unsigned int modChoice = 0;
 		string input;
 		cout << "1) Auto" << endl;
 		cout << "2) Auto pilot" << endl;
 		cout << "3) Relax" << endl;
-		cout << "Please choose a mod: ";
+		cout << "Please choose a bot: ";
 		cin >> input;
 		// input validation
 		while (!(all_of(input.begin(), input.end(), isdigit)) || (stoi(input) != 1 && stoi(input) != 2 && stoi(input) != 3)) {
@@ -448,11 +774,30 @@ void OsuBot::start() {
 			cout << "1) Auto" << endl;
 			cout << "2) Auto pilot" << endl;
 			cout << "3) Relax" << endl;
+			cout << "Please choose a bot: ";
+			cin >> input;
+		}
+		botChoice = stoi(input);
+		system("cls");
+		cout << "1) No mod" << endl;
+		cout << "2) Hardrock" << endl;
+		cout << "Please choose a mod: ";
+		cin >> input;
+		while (!(all_of(input.begin(), input.end(), isdigit)) || (stoi(input) != 1 && stoi(input) != 2)) {
+			cout << "Invalid input. Please enter again." << endl;
+			cout << "1) No mod" << endl;
+			cout << "2) Hardrock" << endl;
 			cout << "Please choose a mod: ";
 			cin >> input;
 		}
-		choice = stoi(input);
-		cout << choice << endl;
+		int tempModChoice = stoi(input);
+		switch (tempModChoice) {
+		//case 1:
+			//modChoice = 0
+			//break;
+		case 2:
+			modChoice = 16;
+		}
 		system("cls");
 		cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
 		
@@ -495,15 +840,15 @@ void OsuBot::start() {
 					if (b.allSet) {
 						// start the bot
 						cout << "Starting: " << beatmapVec.at(0).nameOfOsuFile << endl;
-						switch (choice) {
+						switch (botChoice) {
 						case 1:
-							(this)->modAuto(b);
+							(this)->modAuto(b, modChoice);
 							break;
 						case 2:
-							(this)->modAutoPilot(b);
+							(this)->modAutoPilot(b, modChoice);
 							break;
 						case 3:
-							(this)->modRelax(b);
+							(this)->modRelax(b, modChoice);
 							break;
 						}
 						checkIfIsPlaying.join();
@@ -559,15 +904,15 @@ void OsuBot::start() {
 					Beatmap b = lastPlayedBeatmap.back();
 					if (b.allSet) {
 						cout << "Starting: " << Functions::split(b.fullPathBeatmapFileName, '\\').back() << endl;
-						switch (choice) {
+						switch (botChoice) {
 						case 1:
-							(this)->modAuto(b);
+							(this)->modAuto(b, modChoice);
 							break;
 						case 2:
-							(this)->modAutoPilot(b);
+							(this)->modAutoPilot(b, modChoice);
 							break;
 						case 3:
-							(this)->modRelax(b);
+							(this)->modRelax(b, modChoice);
 							break;
 						}
 						checkIfIsPlaying.join();
@@ -601,7 +946,7 @@ void OsuBot::loadBeatmap(string fileName) {
 		//(this)->modRelax(b);
 		// TODO: solve rest time cursor move instantly
 		//(this)->modAutoPilot(b);
-		(this)->modAuto(b);
+		(this)->modAuto(b, 0);
 		checkIfIsPlaying.join();
 		cout << "Ending: " << fileName << endl << endl;
 	}
@@ -621,6 +966,6 @@ void OsuBot::loadBeatmap(string fileName) {
 //		correctly posit the position of cursor
 //		then implement if the cursor is within the circle, click early for better for relax mode.
 
-//TODO: account for mods
-
-// TODO: dun use bezier to calculate Linear slider to speed up loading (ok)
+// TODO: disable the default value of mod in modRelax, apply to all mod, apply the change to non-unique maps,
+//		bring the calculation back from hitObject
+//		stackleniency!
