@@ -35,6 +35,16 @@ Change the constant OSUROOTPATH in beatmapRelatedStructs.h to match your path
 
 Change LEFT_KEY and RIGHT_KEY in Input.cpp to match your hitkeys
 
+# Known issues
+Stack leniency is not accounted for, so some stacked circles are missed by the bots. (Will be fixed soon)
+
+Movements of some sliders are laggy and oftentimes the sliders are "overshooted" or "undershooted".
+
+# Next update
+Fix for missed stacked circles
+
+Add support for Hardrock mod
+
 # Support
 If you find this useful, please support me to help me get a better laptop! It's a pain in the butt to program using this crappy laptop but I can't afford to buy one cuz I'm still a student :(
 
