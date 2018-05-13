@@ -18,7 +18,6 @@ void HitObject::processHitObjectLine(string hitObjectLine, vector<TimingPoint> T
 	(this)->y = stoi(elements.at(1));
 	(this)->time = stoi(elements.at(2));
 	int type = stoi(elements.at(3));
-
 	// determining hitObject type
 	if ((type & 1) == 1) {
 		(this)->type = TypeE::circle;

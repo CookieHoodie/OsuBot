@@ -42,8 +42,6 @@ OsuBot::OsuBot(wchar_t* processName)
 		(this)->pauseSignalAddress = (this)->currentAudioTimeAddress + 0x24; // 0x24 is the offset to the pauseSignalAddress
 		cout << "Waiting osuDbThread to join..." << endl;
 		osuDbThread.join();
-		// seeding for random numbers
-		srand(time(NULL));
 		cout << "-----------------Initialization done!-----------------"  << "Time taken: " << roundf(chrono::duration<float>(chrono::high_resolution_clock::now() - t_start).count() * 100) / 100 << "s" <<endl << endl;
 	}
 	else {
@@ -199,7 +197,7 @@ POINT OsuBot::getScaledPoints(int x, int y) {
 // -------------------------------------------Mods-------------------------------------------------
 void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 	if ((this)->isPlaying == false) { return; }
-	if (mod == 16) { // if hardrock, calculate new hitwindow
+	if (mod == 16 || mod == 80) { // if hardrock or double time, calculate new hitwindow
 		float newOD = beatmap.Difficulty.overallDifficulty * 1.4;
 		if (newOD > 10) {
 			newOD = 10;
@@ -207,6 +205,16 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 		beatmap.timeRange50 = abs(150 + 50 * (5 - newOD) / 5);
 		beatmap.timeRange100 = abs(100 + 40 * (5 - newOD) / 5);
 		beatmap.timeRange300 = abs(50 + 30 * (5 - newOD) / 5);
+		if (mod == 80) {
+			beatmap.timeRange50 = beatmap.timeRange50 * 0.67;
+			beatmap.timeRange100 = beatmap.timeRange100 * 0.67;
+			beatmap.timeRange300 = beatmap.timeRange300 * 0.67;
+		}
+	}
+	else if (mod == 64) {
+		beatmap.timeRange50 = beatmap.timeRange50 * 0.67;
+		beatmap.timeRange100 = beatmap.timeRange100 * 0.67;
+		beatmap.timeRange300 = beatmap.timeRange300 * 0.67;
 	}
 	bool leftKeysTurn = true;
 	for (auto hitObject : beatmap.HitObjects) {
@@ -223,41 +231,51 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 		if (hitObject.type == HitObject::TypeE::circle) {
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
-				Sleep(rand() % 5 + 10); // sleep for random period of time between 10ms to 15ms
+				Sleep(10); 
 				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
 				Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
-				Sleep(rand() % 5 + 10); // sleep for random period of time between 10ms to 15ms
+				Sleep(10); 
 				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
 		}
 		else if (hitObject.type == HitObject::TypeE::slider) {
+			if (mod == 64 || mod == 80) {
+				hitObject.sliderDuration = hitObject.sliderDuration / 1.5;
+			}
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
-				Sleep(hitObject.sliderDuration + (rand() % 10 + 5)); //sleep for random period of time between 5ms to 15ms after sliderDuration
+				Sleep(hitObject.sliderDuration); 
 				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
 				Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
-				Sleep(hitObject.sliderDuration + (rand() % 10 + 5)); //sleep for random period of time between 5ms to 15ms after sliderDuration
+				Sleep(hitObject.sliderDuration); 
 				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
 		}
 		else if (hitObject.type == HitObject::TypeE::spinner) {
+			int moveDuration;
+			if (mod == 64 || mod == 80) {
+				moveDuration = (hitObject.spinnerEndTime - hitObject.time) * 0.67;
+			}
+			else {
+				moveDuration = hitObject.spinnerEndTime - hitObject.time;
+			}
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
-				Sleep(hitObject.spinnerEndTime - hitObject.time + (rand() % 9)); // sleep min till spinner ends, max till endTime + 8ms
+				Sleep(moveDuration);
 				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
 				Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
-				Sleep(hitObject.spinnerEndTime - hitObject.time + (rand() % 9)); // sleep min till spinner ends, max till endTime + 10ms
+				Sleep(moveDuration);
 				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
@@ -282,7 +300,7 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 											 
 	// move to first hitObject when the beatmap starts
 	HitObject firstHitObject = beatmap.HitObjects.front();
-	if (mod == 16) {
+	if (mod == 16 || mod == 80) {
 		firstHitObject.y = 384 - firstHitObject.y;
 		// and calculate new hitwindow here
 		float newOD = beatmap.Difficulty.overallDifficulty * 1.4;
@@ -292,6 +310,16 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 		beatmap.timeRange50 = abs(150 + 50 * (5 - newOD) / 5);
 		beatmap.timeRange100 = abs(100 + 40 * (5 - newOD) / 5);
 		beatmap.timeRange300 = abs(50 + 30 * (5 - newOD) / 5);
+		if (mod == 80) {
+			beatmap.timeRange50 = beatmap.timeRange50 * 0.67;
+			beatmap.timeRange100 = beatmap.timeRange100 * 0.67;
+			beatmap.timeRange300 = beatmap.timeRange300 * 0.67;
+		}
+	}
+	else if (mod == 64) {
+		beatmap.timeRange50 = beatmap.timeRange50 * 0.67;
+		beatmap.timeRange100 = beatmap.timeRange100 * 0.67;
+		beatmap.timeRange300 = beatmap.timeRange300 * 0.67;
 	}
 	// "-300" and "250" following are the preset adjustments as to when the cursor should move
 	while ((this)->getCurrentAudioTime() < firstHitObject.time - 300) {
@@ -307,7 +335,12 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 	// determine current cursor position and move from there to the firstHitObject
 	POINT currentCursorPos;
 	GetCursorPos(&currentCursorPos);
-	Input::circleLinearMove(currentCursorPos, startPoint, 250);
+	if (mod == 64 || mod == 80) {
+		Input::circleLinearMove(currentCursorPos, startPoint, 250 * 0.67);
+	}
+	else {
+		Input::circleLinearMove(currentCursorPos, startPoint, 250);
+	}
 
 	// starting of first to last hitObject
 	for (int i = 1; i < beatmap.HitObjects.size(); i++) {
@@ -318,7 +351,7 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 		}
 		HitObject currentHitObject = beatmap.HitObjects.at(i - 1);
 		HitObject nextHitObject = beatmap.HitObjects.at(i);
-		if (mod == 16) {
+		if (mod == 16 || mod == 80) {
 			currentHitObject.y = 384 - currentHitObject.y;
 			nextHitObject.y = 384 - nextHitObject.y;
 		}
@@ -346,29 +379,57 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 				// then rewrite currentHitObject to get the calculated points
 				currentHitObject = beatmap.HitObjects.at(i - 1);
 				// if it's hardrock, the previous calculation on currentHitObject.y has been overwritten, so calculate again
-				if (mod == 16) {
+				if (mod == 16 || mod == 80) {
 					currentHitObject.y = 384 - currentHitObject.y;
 				}
+			}
+			if (mod == 64 || mod == 80) {
+				currentHitObject.sliderDuration = currentHitObject.sliderDuration / 1.5;
 			}
 			// move slider regardless of type and after reaching the slider end, move linearly to next hitObject
 			// the duration of moving linearly is divide by 2 to reduce latency and also improve readability
 			POINT endPoint = Input::sliderMove(currentHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
-			Input::circleLinearMove(endPoint, nextPoint, (nextHitObject.time - currentHitObject.time - currentHitObject.sliderDuration) / 2);
-			
+			int moveDuration;
+			if (mod == 64 || mod == 80) {
+				moveDuration = ((nextHitObject.time - currentHitObject.time) * 0.67 - currentHitObject.sliderDuration) / 2;
+			}
+			else {
+				moveDuration = (nextHitObject.time - currentHitObject.time - currentHitObject.sliderDuration) / 2;
+			}
+			Input::circleLinearMove(endPoint, nextPoint, moveDuration);
 		}
 		else if (currentHitObject.type == HitObject::TypeE::spinner) {
-			POINT endPoint = Input::spinnerMove(center, currentHitObject.spinnerEndTime - currentHitObject.time);
-			// same reason as above
-			Input::circleLinearMove(endPoint, nextPoint, (nextHitObject.time - currentHitObject.spinnerEndTime) / 2);
+			int moveDuration;
+			if (mod == 64 || mod == 80) {
+				moveDuration = (currentHitObject.spinnerEndTime - currentHitObject.time) * 0.67;
+			}
+			else {
+				moveDuration = currentHitObject.spinnerEndTime - currentHitObject.time;
+			}
+			POINT endPoint = Input::spinnerMove(center, moveDuration);
+			if (mod == 64 || mod == 80) {
+				moveDuration = (nextHitObject.time - currentHitObject.spinnerEndTime) * 0.67 / 2;
+			}
+			else {
+				moveDuration = (nextHitObject.time - currentHitObject.spinnerEndTime) / 2;
+			}
+			Input::circleLinearMove(endPoint, nextPoint, moveDuration);
 		}
 		else { // circle
-			Input::circleLinearMove(currentPoint, nextPoint, (nextHitObject.time - currentHitObject.time) / 2);
+			int moveDuration;
+			if (mod == 64 || mod == 80) {
+				moveDuration = (nextHitObject.time - currentHitObject.time) * 0.67 / 2;
+			}
+			else {
+				moveDuration = (nextHitObject.time - currentHitObject.time) / 2;
+			}
+			Input::circleLinearMove(currentPoint, nextPoint, moveDuration);
 		}
 	}
 
 	// play last hitObject as it is not played in the loop (if it's circle then it's already done)
 	HitObject lastHitObject = beatmap.HitObjects.back();
-	if (mod == 16) {
+	if (mod == 16 || mod == 80) {
 		lastHitObject.y = 384 - lastHitObject.y;
 	}
 	while ((this)->getCurrentAudioTime() < lastHitObject.time + beatmap.timeRange300 - 3) {
@@ -379,11 +440,21 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 		}
 	}
 	if (lastHitObject.type == HitObject::TypeE::slider) {
+		if (mod == 64 || mod == 80) {
+			lastHitObject.sliderDuration = lastHitObject.sliderDuration / 1.5;
+		}
 		Input::sliderMove(lastHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
 	}
 	else if (lastHitObject.type == HitObject::TypeE::spinner) {
 		POINT center = (this)->getScaledPoints(256, 192);
-		Input::spinnerMove(center, lastHitObject.spinnerEndTime - lastHitObject.time);
+		int moveDuration;
+		if (mod == 64 || mod == 80) {
+			moveDuration = (lastHitObject.time - lastHitObject.spinnerEndTime) * 0.67;
+		}
+		else {
+			moveDuration = (lastHitObject.time - lastHitObject.spinnerEndTime);
+		}
+		Input::spinnerMove(center, moveDuration);
 	}
 	setPointsOnCurveThread.join(); // dun forget to join the thread b4 exiting
 }
@@ -402,10 +473,10 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 
 	// move to first hitObject when the beatmap starts
 	HitObject firstHitObject = beatmap.HitObjects.front();
-	if (mod == 16) {
+	if (mod == 16 || mod == 80) {
 		firstHitObject.y = 384 - firstHitObject.y;
 	}
-	// "-300" and "250" following are the preset adjustments as to when the cursor should move
+	// "-300" and "250" are the preset adjustments as to when the cursor should move
 	while ((this)->getCurrentAudioTime() < firstHitObject.time - 300) {
 		// while waiting for the time to hit hitObject, constantly check if the map is still being played
 		// if it's not, break out of this function to end the map
@@ -419,7 +490,12 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 	// determine current cursor position and move from there to the firstHitObject
 	POINT currentCursorPos;
 	GetCursorPos(&currentCursorPos);
-	Input::circleLinearMove(currentCursorPos, startPoint, 250);
+	if (mod == 64 || mod == 80) {
+		Input::circleLinearMove(currentCursorPos, startPoint, 250 * 0.67);
+	}
+	else {
+		Input::circleLinearMove(currentCursorPos, startPoint, 250);
+	}
 	
 	// starting of first to last hitObject
 	for (int i = 1; i < beatmap.HitObjects.size(); i++) {
@@ -430,7 +506,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 		}
 		HitObject currentHitObject = beatmap.HitObjects.at(i - 1);
 		HitObject nextHitObject = beatmap.HitObjects.at(i);
-		if (mod == 16) {
+		if (mod == 16 || mod == 80) {
 			currentHitObject.y = 384 - currentHitObject.y;
 			nextHitObject.y = 384 - nextHitObject.y;
 		}
@@ -464,9 +540,12 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 				// then rewrite currentHitObject to get the calculated points
 				currentHitObject = beatmap.HitObjects.at(i - 1);
 				// if it's hardrock, the previous calculation on currentHitObject.y has been overwritten, so calculate again
-				if (mod == 16) {
+				if (mod == 16 || mod == 80) {
 					currentHitObject.y = 384 - currentHitObject.y;
 				}
+			}
+			if (mod == 64 || mod == 80) {
+				currentHitObject.sliderDuration = currentHitObject.sliderDuration / 1.5;
 			}
 			// move slider regardless of type and after reaching the slider end, move linearly to next hitObject
 			// the duration of moving linearly is divide by 2 to reduce latency and also improve readability
@@ -480,11 +559,24 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
-			Input::circleLinearMove(endPoint, nextPoint, (nextHitObject.time - currentHitObject.time - currentHitObject.sliderDuration) / 2);
-
+			int moveDuration;
+			if (mod == 64 || mod == 80) {
+				moveDuration = ((nextHitObject.time - currentHitObject.time) * 0.67 - currentHitObject.sliderDuration) / 2;
+			}
+			else {
+				moveDuration = (nextHitObject.time - currentHitObject.time - currentHitObject.sliderDuration) / 2;
+			}
+			Input::circleLinearMove(endPoint, nextPoint, moveDuration);
 		}
 		else if (currentHitObject.type == HitObject::TypeE::spinner) {
-			POINT endPoint = Input::spinnerMove(center, currentHitObject.spinnerEndTime - currentHitObject.time);
+			int moveDuration;
+			if (mod == 64 || mod == 80) {
+				moveDuration = (currentHitObject.spinnerEndTime - currentHitObject.time) * 0.67;
+			}
+			else {
+				moveDuration = currentHitObject.spinnerEndTime - currentHitObject.time;
+			}
+			POINT endPoint = Input::spinnerMove(center, moveDuration);
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
@@ -493,8 +585,14 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
-			// same reason as above
-			Input::circleLinearMove(endPoint, nextPoint, (nextHitObject.time - currentHitObject.spinnerEndTime) / 2);
+			//int moveDuration;
+			if (mod == 64 || mod == 80) {
+				moveDuration = (nextHitObject.time - currentHitObject.spinnerEndTime) * 0.67 / 2;
+			}
+			else {
+				moveDuration = (nextHitObject.time - currentHitObject.spinnerEndTime) / 2;
+			}
+			Input::circleLinearMove(endPoint, nextPoint, moveDuration);
 		}
 		else { // circle
 			// sleep so that the key press is detected by the game client
@@ -509,13 +607,20 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
-			Input::circleLinearMove(currentPoint, nextPoint, (nextHitObject.time - currentHitObject.time) / 2);
+			int moveDuration;
+			if (mod == 64 || mod == 80) {
+				moveDuration = (nextHitObject.time - currentHitObject.time) * 0.67 / 2;
+			}
+			else {
+				moveDuration = (nextHitObject.time - currentHitObject.time) / 2;
+			}
+			Input::circleLinearMove(currentPoint, nextPoint, moveDuration);
 		}
 	}
 
 	// play last hitObject as it is not played in the loop (if it's circle then it's already done)
 	HitObject lastHitObject = beatmap.HitObjects.back();
-	if (mod == 16) {
+	if (mod == 16 || mod == 80) {
 		lastHitObject.y = 384 - lastHitObject.y;
 	}
 	while ((this)->getCurrentAudioTime() < lastHitObject.time) {
@@ -545,11 +650,21 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 				lastHitObject.y = 384 - lastHitObject.y;
 			}
 		}*/
+		if (mod == 64 || mod == 80) {
+			lastHitObject.sliderDuration = lastHitObject.sliderDuration / 1.5;
+		}
 		Input::sliderMove(lastHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
 	}
 	else if (lastHitObject.type == HitObject::TypeE::spinner) {
 		POINT center = (this)->getScaledPoints(256, 192);
-		Input::spinnerMove(center, lastHitObject.spinnerEndTime - lastHitObject.time);
+		int moveDuration;
+		if (mod == 64 || mod == 80) {
+			moveDuration = (lastHitObject.time - lastHitObject.spinnerEndTime) * 0.67;
+		}
+		else {
+			moveDuration = (lastHitObject.time - lastHitObject.spinnerEndTime);
+		}
+		Input::spinnerMove(center, moveDuration);
 	}
 
 	Sleep(10); // account for circle.
@@ -581,7 +696,7 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 				CurvePointsS c = hitObject.CurvePoints.at(0).at(2); // end
 
 				// account for hardrock mod
-				if (mod == 16) {
+				if (mod == 16 || mod == 80) {
 					a.y = 384 - a.y;
 					b.y = 384 - b.y;
 					c.y = 384 - c.y;
@@ -610,9 +725,9 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 				auto linearDistance = sqrt(bSq);
 				auto circleDistance = sqrt(aSq) + sqrt(cSq);
 				// own calculation which checks if the circle is almost like linear
-				if (Functions::almostEquals(linearDistance, circleDistance)) { // tolerance = 0.25
+				if (Functions::almostEquals(linearDistance, circleDistance, 0.5)) { 
 					HitObjects.at(index).sliderType = 'L'; // fake that this slider is Linear
-					if (mod == 16) {
+					if (mod == 16 || mod == 80) {
 						HitObjects.at(index).CurvePoints.front().front().y = 384 - HitObjects.at(index).CurvePoints.front().front().y;
 						HitObjects.at(index).CurvePoints.front().back().y = 384 - HitObjects.at(index).CurvePoints.front().back().y;
 					}
@@ -620,7 +735,7 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 					continue;
 				}
 				// not so linear but still quite linear
-				else if (Functions::almostEquals(linearDistance, circleDistance, 0.5)) {
+				else if (Functions::almostEquals(linearDistance, circleDistance, 1.5)) {
 					HitObjects.at(index).sliderType = 'B';
 					/*vector<HitObject> tempHitObject;
 					tempHitObject.push_back(hitObject);
@@ -694,7 +809,7 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 				HitObjects.at(index).sliderPointsAreCalculated = true;
 			}
 			else if (hitObject.sliderType == 'L') {
-				if (mod == 16) {
+				if (mod == 16 || mod == 80) {
 					HitObjects.at(index).CurvePoints.front().front().y = 384 - HitObjects.at(index).CurvePoints.front().front().y;
 					HitObjects.at(index).CurvePoints.front().back().y = 384 - HitObjects.at(index).CurvePoints.front().back().y;
 				}
@@ -715,7 +830,7 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 				// If no idea abt what is going on here, google bezier curve calculation
 				for (auto curvePointsV : hitObject.CurvePoints) {
 					// change all y coordinates in CurvePoints if hardrock mod
-					if (mod == 16) {
+					if (mod == 16 || mod == 80) {
 						for (int i = 0; i < curvePointsV.size(); i++) {
 							curvePointsV.at(i).y = 384 - curvePointsV.at(i).y;
 						}
@@ -769,7 +884,7 @@ void OsuBot::start() {
 		cout << "Please choose a bot: ";
 		cin >> input;
 		// input validation
-		while (!(all_of(input.begin(), input.end(), isdigit)) || (stoi(input) != 1 && stoi(input) != 2 && stoi(input) != 3)) {
+		while (!(all_of(input.begin(), input.end(), isdigit)) || stoi(input) < 1 || stoi(input) > 3) {
 			cout << "Invalid input. Please enter again." << endl;
 			cout << "1) Auto" << endl;
 			cout << "2) Auto pilot" << endl;
@@ -781,12 +896,16 @@ void OsuBot::start() {
 		system("cls");
 		cout << "1) No mod" << endl;
 		cout << "2) Hardrock" << endl;
+		cout << "3) Double time" << endl;
+		cout << "4) HR DT" << endl;
 		cout << "Please choose a mod: ";
 		cin >> input;
-		while (!(all_of(input.begin(), input.end(), isdigit)) || (stoi(input) != 1 && stoi(input) != 2)) {
+		while (!(all_of(input.begin(), input.end(), isdigit)) || stoi(input) < 1 || stoi(input) > 4) {
 			cout << "Invalid input. Please enter again." << endl;
 			cout << "1) No mod" << endl;
 			cout << "2) Hardrock" << endl;
+			cout << "3) Double time" << endl;
+			cout << "4) HR DT" << endl;
 			cout << "Please choose a mod: ";
 			cin >> input;
 		}
@@ -797,8 +916,17 @@ void OsuBot::start() {
 			//break;
 		case 2:
 			modChoice = 16;
+			break;
+		case 3:
+			modChoice = 64;
+			break;
+		case 4:
+			modChoice = 80; // 16 + 64
+			break;
 		}
+		
 		system("cls");
+		cout << "*If you've chosen any mods, remember to turn on the mods in your osu! client manually!" << endl;
 		cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
 		
 		// more comprehensive checking var for unique title
@@ -955,17 +1083,9 @@ void OsuBot::loadBeatmap(string fileName) {
 	}
 }
 
-
-
-
-// TODO: implement correctly.
-//		implement pause check and retry check and die check
-//		and also review replay check?
-
 // TODO2:
-//		correctly posit the position of cursor
 //		then implement if the cursor is within the circle, click early for better for relax mode.
 
-// TODO: disable the default value of mod in modRelax, apply to all mod, apply the change to non-unique maps,
-//		bring the calculation back from hitObject
+// TODO: 
 //		stackleniency!
+//		bluenation slider time problem

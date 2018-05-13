@@ -15,6 +15,10 @@ void TimingPoint::processTimingPoints(string timingPointLine, float* lastPositiv
 
 	// if the timing point MPB is relative, calculate the realMPB base on lastPositiveMPB
 	if ((this)->relativeMPB < 0) {
+		// exception case where (fking bs) mapper customly set the relative timing point to less than -1000, which is not recognized by osu
+		if ((this)->relativeMPB < -1000) {
+			(this)->relativeMPB = -1000;
+		}
 		float percentage = (this)->relativeMPB / -100;
 		(this)->realMPB = *lastPositiveMPB * percentage;
 	}
