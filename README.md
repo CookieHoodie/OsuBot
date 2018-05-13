@@ -1,3 +1,8 @@
+# New updates
+Hardrock mod is now supported!
+
+Loading of beatmaps is now faster!
+
 # OsuBot
 A bot which, for now, does auto, relax, and autopilot mod in osu!. The codes are working but there are still a lot of modifications and improvements
 
@@ -5,7 +10,7 @@ Please use this for educational purpose, not real cheating in the game.
 
 Most of the codes come with comments, but feel free to ask me if you have any question regarding the code!
 
-#### **This can only be run on windows platform!
+#### **This can only be run on windows platform, and is not yet tested on different machines!
 
 # Overview
 
@@ -40,10 +45,12 @@ Stack leniency is not accounted for, so some stacked circles are missed by the b
 
 Movements of some sliders are laggy and oftentimes the sliders are "overshooted" or "undershooted".
 
-# Next update
+Cursor can't manage to follow through the whole slider on time in long slider maps such as this one https://osu.ppy.sh/beatmapsets/124997#osu/342075
+
+# TODO
 Fix for missed stacked circles
 
-Add support for Hardrock mod
+Support for DT mod
 
 # Support
 If you find this useful, please support me to help me get a better laptop! It's a pain in the butt to program using this crappy laptop but I can't afford to buy one cuz I'm still a student :(
