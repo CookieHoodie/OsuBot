@@ -22,7 +22,7 @@ bool Functions::almostEquals(const float a, const float b, const float tolerance
 	//return (a + tolerance >= b) && (a - tolerance <= b);
 }
 
-POINT Functions::bezierCurve(vector<CurvePointsS> curvePoints, float t) {
+FPointS Functions::bezierCurve(vector<CurvePointsS> curvePoints, float t) {
 	// credit to Amryu from https://osu.ppy.sh/community/forums/topics/606522
 	double bx = 0;
 	double by = 0;
@@ -45,7 +45,7 @@ POINT Functions::bezierCurve(vector<CurvePointsS> curvePoints, float t) {
 			by += Functions::binomialCoef(n, i) * pow(1 - t, n - i) * pow(t, i) * curvePoints.at(i).y;
 		}
 	}
-	POINT p;
+	FPointS p;
 	p.x = bx;
 	p.y = by;
 	return p;

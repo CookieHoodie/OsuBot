@@ -163,7 +163,7 @@ POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, flo
 	auto globalStartTime = chrono::high_resolution_clock::now();
 	long long nanoDuration = (long long)currentHitObject.sliderDuration * 1000000;
 	bool reverse = false;
-	POINT unscaledEndPoint;
+	FPointS unscaledEndPoint;
 	if (currentHitObject.sliderType == 'L') {
 		CurvePointsS start = currentHitObject.CurvePoints.at(0).front();
 		POINT startPoint;
@@ -197,7 +197,7 @@ POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, flo
 				for (int j = 0; j < currentHitObject.pointsOnCurve.size()
 					&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration; j++) {
 					auto t_start = chrono::high_resolution_clock::now();
-					POINT point = currentHitObject.pointsOnCurve.at(j);
+					FPointS point = currentHitObject.pointsOnCurve.at(j);
 					int scaledX = point.x * pointsMultiplierX + cursorStartPoints.x;
 					int scaledY = point.y * pointsMultiplierY + cursorStartPoints.y;
 					SetCursorPos(scaledX, scaledY);
@@ -212,7 +212,7 @@ POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, flo
 				for (int j = currentHitObject.pointsOnCurve.size(); j-- > 0
 					&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration;) {
 					auto t_start = chrono::high_resolution_clock::now();
-					POINT currentPoint = currentHitObject.pointsOnCurve.at(j);
+					FPointS currentPoint = currentHitObject.pointsOnCurve.at(j);
 					int scaledX = currentPoint.x * pointsMultiplierX + cursorStartPoints.x;
 					int scaledY = currentPoint.y * pointsMultiplierY + cursorStartPoints.y;
 					SetCursorPos(scaledX, scaledY);

@@ -547,6 +547,9 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 			if (mod == 64 || mod == 80) {
 				currentHitObject.sliderDuration = currentHitObject.sliderDuration / 1.5;
 			}
+			if (currentHitObject.x == 437 && currentHitObject.y == 129) {
+				int g = 0;
+			}
 			// move slider regardless of type and after reaching the slider end, move linearly to next hitObject
 			// the duration of moving linearly is divide by 2 to reduce latency and also improve readability
 			POINT endPoint = Input::sliderMove(currentHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
@@ -688,7 +691,7 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 			if (hitObject.sliderType == 'P') {
 				// calculation for 'P' type slider
 				// this is the translation of code from official code: https://github.com/ppy/osu/blob/master/osu.Game/Rulesets/Objects/CircularArcApproximator.cs
-				const float tolerance = 0.1f;
+				const float tolerance = 0.02f; // change from 0.1f (official) to 0.02f to enhance smoothness
 				const double PI = 4 * atan(1);
 
 				CurvePointsS a = hitObject.CurvePoints.at(0).at(0); // start
@@ -800,7 +803,7 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 					// moving across the circle bit by bit
 					float ox = cos(theta) * r;
 					float oy = sin(theta) * r;
-					POINT p;
+					FPointS p;
 					p.x = centerx + ox;
 					p.y = centery + oy;
 					// straight away update the referenced object
@@ -823,7 +826,7 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 				// refer to: https://love2d.org/forums/viewtopic.php?t=82612
 				// May consider using another method for optimization 
 
-				vector<POINT> pointsOnCurve; // store points on the bezier curve in 1st loop
+				//vector<FPointS> pointsOnCurve; // store points on the bezier curve in 1st loop
 
 				double distanceConst = 0.5; // define step size. large == inaccurate and vice versa
 
@@ -836,15 +839,18 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 						}
 					}
 					for (float t = 0; t <= 1; t += 0.01) {
-						POINT p = Functions::bezierCurve(curvePointsV, t);
-						pointsOnCurve.push_back(p);
-						int sizeOfVector = pointsOnCurve.size();
+						FPointS p = Functions::bezierCurve(curvePointsV, t);
+						int sizeOfVector = HitObjects.at(index).pointsOnCurve.size();
 						// if there are already more than 2 points calculated, it's time to calculate their distances
-						if (sizeOfVector > 1) {
-							POINT previousPoint = pointsOnCurve.at(sizeOfVector - 2);
+						if (sizeOfVector >= 1) {
+							FPointS previousPoint = HitObjects.at(index).pointsOnCurve.at(sizeOfVector - 1);
 							auto distance = sqrt(pow(p.y - previousPoint.y, 2) + pow(p.x - previousPoint.x, 2));
 							// directly calculate equidistant points
-							POINT vec;
+							FPointS equalDistancePoint;
+							// initialize equalDistancePoint first to last point's coordinate
+							equalDistancePoint.x = previousPoint.x;
+							equalDistancePoint.y = previousPoint.y;
+							FPointS vec;
 							// getting direction of currentPoint
 							vec.x = p.x - previousPoint.x;
 							vec.y = p.y - previousPoint.y;
@@ -853,13 +859,15 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 							auto unitvectorY = vec.y / (sqrt(vec.x * vec.x + vec.y * vec.y));
 							// move for distanceConst in the direction to next PointOnCurve
 							while (distance >= distanceConst) {
-								POINT equalDistancePoint;
-								equalDistancePoint.x = previousPoint.x + distanceConst * unitVectorX;
-								equalDistancePoint.y = previousPoint.y + distanceConst * unitvectorY;
+								// then keep on updating equalDistancePoint until condition is met
+								equalDistancePoint.x = equalDistancePoint.x + distanceConst * unitVectorX;
+								equalDistancePoint.y = equalDistancePoint.y + distanceConst * unitvectorY;
 								// store the equidistant points into member var
-								HitObjects.at(index).pointsOnCurve.push_back(p);
+								HitObjects.at(index).pointsOnCurve.push_back(equalDistancePoint);
 								distance -= distanceConst;
 							}
+							//HitObjects.at(index).pointsOnCurve.push_back(p);
+							// this line is disable as it is more accurate without considering every exact point on bezier curve
 						}
 						else { // store 1st point into member var no matter what
 							HitObjects.at(index).pointsOnCurve.push_back(p);

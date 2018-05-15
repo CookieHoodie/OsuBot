@@ -10,12 +10,16 @@ using namespace std;
 const static string OSUROOTPATH = "C:\\Users\\ong\\AppData\\Local\\osu!\\";
 
 // ----------------------------------------For HitObject-----------------------------------------
-// TODO: change all POINT related calculation to CurvePointsS and change int to double or float instead
+typedef struct FPoint {
+	float x;
+	float y;
+} FPointS;
+
 // Struct for Slider ONLY!
-typedef struct CurvePointsS {
+typedef struct CurvePoints {
 	int x;
 	int y;
-	CurvePointsS(int x, int y) {
+	CurvePoints(int x, int y) {
 		(this)->x = x;
 		(this)->y = y;
 	}

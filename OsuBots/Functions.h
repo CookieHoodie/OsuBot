@@ -21,6 +21,6 @@ public:
 
 	static bool almostEquals(const float a, const float b, const float tolerance = 0.25);
 	static double binomialCoef(int n, int k);
-	static POINT bezierCurve(vector<CurvePointsS> curvePointsV, float t); 
+	static FPointS bezierCurve(vector<CurvePointsS> curvePointsV, float t);
 };
 

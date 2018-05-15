@@ -38,7 +38,7 @@ public:
 	bool sliderPointsAreCalculated;
 	// calculated variables
 	int sliderDuration;
-	vector<POINT> pointsOnCurve;
+	vector<FPointS> pointsOnCurve;
 
 	// Spinners:
 	int spinnerEndTime;
