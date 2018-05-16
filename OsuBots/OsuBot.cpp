@@ -449,10 +449,10 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 		POINT center = (this)->getScaledPoints(256, 192);
 		int moveDuration;
 		if (mod == 64 || mod == 80) {
-			moveDuration = (lastHitObject.time - lastHitObject.spinnerEndTime) * 0.67;
+			moveDuration = (lastHitObject.spinnerEndTime - lastHitObject.time) * 0.67;
 		}
 		else {
-			moveDuration = (lastHitObject.time - lastHitObject.spinnerEndTime);
+			moveDuration = (lastHitObject.spinnerEndTime - lastHitObject.time);
 		}
 		Input::spinnerMove(center, moveDuration);
 	}
@@ -662,10 +662,10 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 		POINT center = (this)->getScaledPoints(256, 192);
 		int moveDuration;
 		if (mod == 64 || mod == 80) {
-			moveDuration = (lastHitObject.time - lastHitObject.spinnerEndTime) * 0.67;
+			moveDuration = (lastHitObject.spinnerEndTime - lastHitObject.time) * 0.67;
 		}
 		else {
-			moveDuration = (lastHitObject.time - lastHitObject.spinnerEndTime);
+			moveDuration = (lastHitObject.spinnerEndTime - lastHitObject.time);
 		}
 		Input::spinnerMove(center, moveDuration);
 	}
@@ -691,7 +691,7 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 			if (hitObject.sliderType == 'P') {
 				// calculation for 'P' type slider
 				// this is the translation of code from official code: https://github.com/ppy/osu/blob/master/osu.Game/Rulesets/Objects/CircularArcApproximator.cs
-				const float tolerance = 0.02f; // change from 0.1f (official) to 0.02f to enhance smoothness
+				const float tolerance = 0.01f; // change from 0.1f (official) to enhance smoothness
 				const double PI = 4 * atan(1);
 
 				CurvePointsS a = hitObject.CurvePoints.at(0).at(0); // start
@@ -725,29 +725,30 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 					continue;
 				}
 
-				auto linearDistance = sqrt(bSq);
-				auto circleDistance = sqrt(aSq) + sqrt(cSq);
-				// own calculation which checks if the circle is almost like linear
-				if (Functions::almostEquals(linearDistance, circleDistance, 0.5)) { 
-					HitObjects.at(index).sliderType = 'L'; // fake that this slider is Linear
-					if (mod == 16 || mod == 80) {
-						HitObjects.at(index).CurvePoints.front().front().y = 384 - HitObjects.at(index).CurvePoints.front().front().y;
-						HitObjects.at(index).CurvePoints.front().back().y = 384 - HitObjects.at(index).CurvePoints.front().back().y;
-					}
-					HitObjects.at(index).sliderPointsAreCalculated = true;
-					continue;
-				}
-				// not so linear but still quite linear
-				else if (Functions::almostEquals(linearDistance, circleDistance, 1.5)) {
-					HitObjects.at(index).sliderType = 'B';
-					/*vector<HitObject> tempHitObject;
-					tempHitObject.push_back(hitObject);
-					(this)->calcAndSetPointsOnCurve(tempHitObject, mod, move(futureObj));
-					tempHitObject.front().sliderType = 'P';
-					HitObjects.at(index) = tempHitObject.front();*/
-					index--;
-					continue;
-				}
+				// 'P' curve can be smooth now after changing the tolerance, so "faking" is no longer needed
+				//auto linearDistance = sqrt(bSq);
+				//auto circleDistance = sqrt(aSq) + sqrt(cSq);
+				//// own calculation which checks if the circle is almost like linear
+				//if (Functions::almostEquals(linearDistance, circleDistance, 0.5)) { 
+				//	HitObjects.at(index).sliderType = 'L'; // fake that this slider is Linear
+				//	if (mod == 16 || mod == 80) {
+				//		HitObjects.at(index).CurvePoints.front().front().y = 384 - HitObjects.at(index).CurvePoints.front().front().y;
+				//		HitObjects.at(index).CurvePoints.front().back().y = 384 - HitObjects.at(index).CurvePoints.front().back().y;
+				//	}
+				//	HitObjects.at(index).sliderPointsAreCalculated = true;
+				//	continue;
+				//}
+				//// not so linear but still quite linear
+				//else if (Functions::almostEquals(linearDistance, circleDistance, 1.5)) {
+				//	HitObjects.at(index).sliderType = 'B';
+				//	/*vector<HitObject> tempHitObject;
+				//	tempHitObject.push_back(hitObject);
+				//	(this)->calcAndSetPointsOnCurve(tempHitObject, mod, move(futureObj));
+				//	tempHitObject.front().sliderType = 'P';
+				//	HitObjects.at(index) = tempHitObject.front();*/
+				//	index--;
+				//	continue;
+				//}
 
 				float s = aSq * (bSq + cSq - aSq);
 				float t = bSq * (aSq + cSq - bSq);
@@ -794,12 +795,12 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 					dir = -dir;
 					thetaRange = 2 * 4 * atan(1) - thetaRange;
 				}
-
 				int amountPoints = 2 * r <= tolerance ? 2 : max(2, (int)ceil(thetaRange / (2 * acos(1 - tolerance / r))));
 				for (int i = 0; i < amountPoints; ++i)
 				{
 					double fract = (double)i / (amountPoints - 1);
-					double theta = thetaStart + dir * fract * thetaRange;
+					double thetaIncrement = dir * fract * thetaRange;
+					double theta = thetaStart + thetaIncrement;
 					// moving across the circle bit by bit
 					float ox = cos(theta) * r;
 					float oy = sin(theta) * r;
@@ -808,13 +809,38 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 					p.y = centery + oy;
 					// straight away update the referenced object
 					HitObjects.at(index).pointsOnCurve.push_back(p);
+					// calculate total arc length
+					auto distance = abs(thetaIncrement * r);
+					// if overshoot, stop
+					if (distance >= hitObject.pixelLength) {
+						break;
+					}
 				}
 				HitObjects.at(index).sliderPointsAreCalculated = true;
 			}
 			else if (hitObject.sliderType == 'L') {
+				// calculation for hr
 				if (mod == 16 || mod == 80) {
 					HitObjects.at(index).CurvePoints.front().front().y = 384 - HitObjects.at(index).CurvePoints.front().front().y;
 					HitObjects.at(index).CurvePoints.front().back().y = 384 - HitObjects.at(index).CurvePoints.front().back().y;
+				}
+				// store in variables as they're used multiple times in calculation
+				CurvePointsS startPoint = HitObjects.at(index).CurvePoints.front().front();
+				CurvePointsS endPoint = HitObjects.at(index).CurvePoints.front().back();
+				// resolve overshooting
+				auto distance = sqrt(pow(startPoint.y - endPoint.y, 2) + pow(startPoint.x - endPoint.x, 2));
+				// if ald overshoot, need to calculate the new endPoint using vector calculation
+				if (distance > hitObject.pixelLength) {
+					FPointS vec;
+					// getting direction of currentPoint
+					vec.x = endPoint.x - startPoint.x;
+					vec.y = endPoint.y - startPoint.y;
+					// calculate unit vector for moving
+					auto unitVectorX = vec.x / (sqrt(vec.x * vec.x + vec.y * vec.y));
+					auto unitvectorY = vec.y / (sqrt(vec.x * vec.x + vec.y * vec.y));
+					CurvePointsS newEndPoint = CurvePointsS(startPoint.x + hitObject.pixelLength * unitVectorX, startPoint.y + hitObject.pixelLength * unitvectorY);
+					// update hitObject
+					HitObjects.at(index).CurvePoints.front().back() = newEndPoint;
 				}
 				HitObjects.at(index).sliderPointsAreCalculated = true;
 			}
@@ -829,7 +855,7 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 				//vector<FPointS> pointsOnCurve; // store points on the bezier curve in 1st loop
 
 				double distanceConst = 0.5; // define step size. large == inaccurate and vice versa
-
+				double totalDistance = 0; // for resolving overshooting
 				// If no idea abt what is going on here, google bezier curve calculation
 				for (auto curvePointsV : hitObject.CurvePoints) {
 					// change all y coordinates in CurvePoints if hardrock mod
@@ -862,12 +888,22 @@ void OsuBot::calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int
 								// then keep on updating equalDistancePoint until condition is met
 								equalDistancePoint.x = equalDistancePoint.x + distanceConst * unitVectorX;
 								equalDistancePoint.y = equalDistancePoint.y + distanceConst * unitvectorY;
-								// store the equidistant points into member var
+								// update pointsOnCurve
 								HitObjects.at(index).pointsOnCurve.push_back(equalDistancePoint);
+								// move forward by distanceConst
 								distance -= distanceConst;
+								// everytime moving forward, totalDistance moved is also updated
+								totalDistance += distanceConst;
+								if (totalDistance >= hitObject.pixelLength) {
+									break;
+								}
 							}
-							//HitObjects.at(index).pointsOnCurve.push_back(p);
 							// this line is disable as it is more accurate without considering every exact point on bezier curve
+							//HitObjects.at(index).pointsOnCurve.push_back(p);
+							// break out of calculation if exceeds pixelLength
+							if (totalDistance >= hitObject.pixelLength) {
+								break;
+							}
 						}
 						else { // store 1st point into member var no matter what
 							HitObjects.at(index).pointsOnCurve.push_back(p);
