@@ -38,7 +38,10 @@ public:
 	float timeRange50;
 	float timeRange100;
 	float timeRange300;
+	int approachWindow;
 
+	// function
+	static double calcApproachWindow(double AR, double min = 1800, double mid = 1200, double max = 450);
 private:
 	void processBeatmap();
 	//void setFullPathBeatmapFileName(); // deprecated

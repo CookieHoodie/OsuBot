@@ -115,6 +115,7 @@ void Beatmap::processBeatmap() { // only depends on (this)->fullPathBeatmapFileN
 		(this)->timeRange50 = abs(150 + 50 * (5 - (this)->Difficulty.overallDifficulty) / 5);
 		(this)->timeRange100 = abs(100 + 40 * (5 - (this)->Difficulty.overallDifficulty) / 5);
 		(this)->timeRange300 = abs(50 + 30 * (5 - (this)->Difficulty.overallDifficulty) / 5);
+		(this)->approachWindow = Beatmap::calcApproachWindow((this)->Difficulty.approachRate);
 
 		(this)->allSet = true;
 		osuFile.close();
@@ -122,4 +123,12 @@ void Beatmap::processBeatmap() { // only depends on (this)->fullPathBeatmapFileN
 	else {
 		(this)->allSet = false;
 	}
+}
+
+double Beatmap::calcApproachWindow(double AR, double min, double mid, double max) {
+	if (AR > 5)
+		return mid + (max - mid) * (AR - 5) / 5;
+	if (AR < 5)
+		return mid - (mid - min) * (5 - AR) / 5;
+	return mid;
 }

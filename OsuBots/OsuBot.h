@@ -83,7 +83,8 @@ private:
 	void modAutoPilot(Beatmap beatmap, unsigned int mod); 
 	void modAuto(Beatmap beatmap, unsigned int mod);
 
-	// Calculations
-	void calcAndSetPointsOnCurve(vector<HitObject> &HitObjects, unsigned int mod, future<void> futureObj);
+	// Calculations (pass by ref)
+	void recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int mod, future<void> futureObj);
+	void calcAndSetNewBeatmapAttributes(Beatmap &beatmap, unsigned int mod);
 };
 
