@@ -343,7 +343,7 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 			// move slider regardless of type and after reaching the slider end, move linearly to next hitObject
 			// the duration of moving linearly is divide by 2 to reduce latency and also improve readability
 			POINT endPoint = Input::sliderMove(currentHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
-			int moveDuration;
+			double moveDuration;
 			if (mod == 64 || mod == 80) {
 				moveDuration = ((nextHitObject.time - currentHitObject.time) * 0.67 - currentHitObject.sliderDuration) / 2;
 			}
@@ -353,7 +353,7 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 			Input::circleLinearMove(endPoint, nextPoint, moveDuration);
 		}
 		else if (currentHitObject.type == HitObject::TypeE::spinner) {
-			int moveDuration;
+			double moveDuration;
 			if (mod == 64 || mod == 80) {
 				moveDuration = (currentHitObject.spinnerEndTime - currentHitObject.time) * 0.67;
 			}
@@ -361,6 +361,7 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 				moveDuration = currentHitObject.spinnerEndTime - currentHitObject.time;
 			}
 			POINT endPoint = Input::spinnerMove(center, moveDuration);
+
 			if (mod == 64 || mod == 80) {
 				moveDuration = (nextHitObject.time - currentHitObject.spinnerEndTime) * 0.67 / 2;
 			}
@@ -370,7 +371,7 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 			Input::circleLinearMove(endPoint, nextPoint, moveDuration);
 		}
 		else { // circle
-			int moveDuration;
+			double moveDuration;
 			if (mod == 64 || mod == 80) {
 				moveDuration = (nextHitObject.time - currentHitObject.time) * 0.67 / 2;
 			}
@@ -398,7 +399,7 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 	}
 	else if (lastHitObject.type == HitObject::TypeE::spinner) {
 		POINT center = (this)->getScaledPoints(256, 192);
-		int moveDuration;
+		double moveDuration;
 		if (mod == 64 || mod == 80) {
 			moveDuration = (lastHitObject.spinnerEndTime - lastHitObject.time) * 0.67;
 		}
@@ -514,7 +515,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
-			int moveDuration;
+			double moveDuration;
 			if (mod == 64 || mod == 80) {
 				moveDuration = ((nextHitObject.time - currentHitObject.time) * 0.67 - currentHitObject.sliderDuration) / 2;
 			}
@@ -524,7 +525,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 			Input::circleLinearMove(endPoint, nextPoint, moveDuration);
 		}
 		else if (currentHitObject.type == HitObject::TypeE::spinner) {
-			int moveDuration;
+			double moveDuration;
 			if (mod == 64 || mod == 80) {
 				moveDuration = (currentHitObject.spinnerEndTime - currentHitObject.time) * 0.67;
 			}
@@ -540,7 +541,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
-			//int moveDuration;
+			//double moveDuration;
 			if (mod == 64 || mod == 80) {
 				moveDuration = (nextHitObject.time - currentHitObject.spinnerEndTime) * 0.67 / 2;
 			}
@@ -562,7 +563,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
-			int moveDuration;
+			double moveDuration;
 			if (mod == 64 || mod == 80) {
 				moveDuration = (nextHitObject.time - currentHitObject.time) * 0.67 / 2;
 			}
@@ -609,7 +610,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 	}
 	else if (lastHitObject.type == HitObject::TypeE::spinner) {
 		POINT center = (this)->getScaledPoints(256, 192);
-		int moveDuration;
+		double moveDuration;
 		if (mod == 64 || mod == 80) {
 			moveDuration = (lastHitObject.spinnerEndTime - lastHitObject.time) * 0.67;
 		}
@@ -629,10 +630,16 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 // for threading
 // futureObj is simply stop signal from parent thread
 void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int mod, future<void> futureObj) {
-	/*int stackCount = 0;
-	FPointS previousStackedPoint;
+	int stackCount = 1; // 1 means no stack, 2 means 2 objects stack together
+	// initialize to junk value so that 1st hitObject's attributes are assigned to them
+	POINT previousStackedPoint;
 	previousStackedPoint.x = -1000;
-	previousStackedPoint.y = -1000;*/
+	previousStackedPoint.y = -1000;
+	int previousTime = -1000;
+	// calculation from https://github.com/CoderOffka/osuAutoBot/blob/fe45335697bc5200163be162c39ba595868b7c1b/main.cpp#L455
+	double stackOffset = (512.0f / 16.0f) * (1.0f - 0.7f * (beatmap.Difficulty.circleSize - 5.0f) / 5.0f) / 10.0f;
+	// calculation from https://github.com/ppy/osu/blob/0afe33d32fb647f88582286b1e9d5082f81f2670/osu.Game.Rulesets.Osu/Beatmaps/OsuBeatmapProcessor.cs
+	double stackTimeThreshold = beatmap.approachWindow * beatmap.General.stackLeniency;
 
 	for (int index = 0; index < beatmap.HitObjects.size(); index++) {
 		// in each loop, check if stop signal is sent from the calling thread and stop calculating if true
@@ -642,29 +649,36 @@ void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int 
 		// hitObject is a copy, HitObjects.at(index) is a reference
 		auto hitObject = beatmap.HitObjects.at(index);
 
-		//// calculating stack offset
-		//if (hitObject.type != HitObject::TypeE::spinner) {
-		//	if (previousStackedPoint.x != hitObject.x || previousStackedPoint.y != hitObject.y) {
-		//		previousStackedPoint.x = hitObject.x;
-		//		previousStackedPoint.y = hitObject.y;
-		//		stackCount = 0;
-		//	}
-		//	else {
-		//		stackCount++;
-		//		if (stackCount > 3) {
-		//			auto stackOffset = (512.0f / 16.0f) * (1.0f - 0.7f * (beatmap.Difficulty.circleSize - 5.0f) / 5.0f) / 10.0f;
-		//		}
-		//	}
-		//}
-		//else {
-		//	previousStackedPoint.x = -1000;
-		//	previousStackedPoint.y = -1000;
-		//	stackCount = 0;
-		//}
-
 		// change all hitObjects y coordinate if it's HR
 		if (mod == 16 || mod == 80) {
 			beatmap.HitObjects.at(index).y = 384 - beatmap.HitObjects.at(index).y;
+		}
+
+		// not same as last coordinate (ie. no stack or stacking has ended)
+		if (previousStackedPoint.x != hitObject.x || previousStackedPoint.y != hitObject.y || hitObject.time - previousTime > stackTimeThreshold || hitObject.type == HitObject::TypeE::spinner) {
+			// stacking occurs
+			// 3 stacks is not gonna affect much but the bot might miss if >3, so only account for >3
+			if (stackCount > 3) {
+				HitObject baseHitObject = beatmap.HitObjects.at(index - 1);
+				for (int i = 1; i < stackCount; i++) {
+					// update the HitObjects
+					beatmap.HitObjects.at(index - 1 - i).x = baseHitObject.x - i * stackOffset;
+					beatmap.HitObjects.at(index - 1 - i).y = baseHitObject.y - i * stackOffset;
+				}
+			}
+			// reset and initialize first object if it's first
+			previousStackedPoint.x = hitObject.x;
+			previousStackedPoint.y = hitObject.y;
+			previousTime = hitObject.time;
+			stackCount = 1;
+		}
+		// if stack
+		else {
+			// update then increment stackCount
+			previousStackedPoint.x = hitObject.x;
+			previousStackedPoint.y = hitObject.y;
+			previousTime = hitObject.time;
+			stackCount++;
 		}
 		
 		// calculating points on curve
@@ -699,12 +713,13 @@ void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int 
 				auto bSq = pow(ax - cx, 2) + pow(ay - cy, 2);
 				auto cSq = pow(ax - bx, 2) + pow(ay - by, 2);
 
-				// Account for "degenerate triangle" curve according to official code
-				if (Functions::almostEquals(aSq, 0) || Functions::almostEquals(bSq, 0) || Functions::almostEquals(cSq, 0)) {
-					beatmap.HitObjects.at(index).sliderType = 'B'; // fake sliderType to 'B'
-					index--; // decrease index by 1 so that next loop goes to same hitObject but this time goes into 'B' if block
-					continue;
-				}
+				// disable this as this might cause problem
+				//// Account for "degenerate triangle" curve according to official code
+				//if (Functions::almostEquals(aSq, 0) || Functions::almostEquals(bSq, 0) || Functions::almostEquals(cSq, 0)) {
+				//	beatmap.HitObjects.at(index).sliderType = 'B'; // fake sliderType to 'B'
+				//	index--; // decrease index by 1 so that next loop goes to same hitObject but this time goes into 'B' if block
+				//	continue;
+				//}
 
 				// 'P' curve can be smooth now after changing the tolerance, so "faking" is no longer needed
 				//auto linearDistance = sqrt(bSq);
@@ -737,11 +752,11 @@ void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int 
 
 				float sum = s + t + u;
 
-				if (Functions::almostEquals(sum, 0)) {
+				/*if (Functions::almostEquals(sum, 0)) {
 					beatmap.HitObjects.at(index).sliderType = 'B';
 					index--;
 					continue;
-				}
+				}*/
 
 				// get the center of the circle
 				float centerx = (s * ax + t * bx + u * cx) / sum;
@@ -898,6 +913,7 @@ void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int 
 }
 
 void OsuBot::calcAndSetNewBeatmapAttributes(Beatmap &beatmap, unsigned int mod) {
+	// info can be found here https://osu.ppy.sh/help/wiki/Beatmap_Editor/Song_Setup#difficulty
 	// goes to HR first then if DT continues DT calculation
 	// if HR
 	if (mod == 16 || mod == 80) {

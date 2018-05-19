@@ -316,7 +316,14 @@ void OsuDbParser::processDataMin(string fullPathToOsuDb) {
 			// finish parsing beatmap data
 
 			// formating to get osu client window title format
-			string osuWindowTitle = "osu!  - " + beatmap.artistName + " - " + beatmap.songTitle + " [" + beatmap.difficulty + "]";
+			string osuWindowTitle = "";
+			if (beatmap.difficulty != "") {
+				osuWindowTitle = "osu!  - " + beatmap.artistName + " - " + beatmap.songTitle + " [" + beatmap.difficulty + "]";
+			}
+			// special case where there is no difficulty
+			else {
+				osuWindowTitle = "osu!  - " + beatmap.artistName + " - " + beatmap.songTitle;
+			}
 
 			auto beatmapIter = (this)->beatmapsMin.find(osuWindowTitle);
 			if (beatmapIter == (this)->beatmapsMin.end()) { // if this beatmap is not yet added

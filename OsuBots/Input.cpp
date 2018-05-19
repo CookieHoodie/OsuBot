@@ -17,7 +17,7 @@ void Input::sentKeyInput(char key, bool pressed) {
 	SendInput(1, &key_press, sizeof INPUT);
 }
 
-void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, int duration) {
+void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, double duration) {
 	int totalDistanceX = abs(endScaledPoint.x - startScaledPoint.x);
 	int totalDistanceY = abs(endScaledPoint.y - startScaledPoint.y);
 	// account for divide by zero error
@@ -34,7 +34,7 @@ void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, int d
 	
 	POINT currentPosition = startScaledPoint;
 	int distanceMoved = 0; // counter
-	long long nanoDuration = (long long)duration * 1000000;
+	long long nanoDuration = duration * 1000000;
 
 	// to ensure smoothness, decide whether to use x-axis or y-axis base on greater distance
 	bool useX = totalDistanceX > totalDistanceY ? true : false;
@@ -123,7 +123,7 @@ void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, int d
 	}
 }
 
-POINT Input::spinnerMove(POINT scaledCenter, int duration) {
+POINT Input::spinnerMove(POINT scaledCenter, double duration) {
 	auto globalStartTime = chrono::high_resolution_clock::now();
 	const int radius = 70; // fixed radius
 	const int RPM = 400; // fixed RPM. This only gives like 350 RPM, depending on the speed of your computer
@@ -137,7 +137,7 @@ POINT Input::spinnerMove(POINT scaledCenter, int duration) {
 	double numberOfPointsInOneRound = 2 * PI / angleIncrement;
 	double TotalNumberOfRoundsNeeded = (RPM / 60) * ((double)duration / 1000);
 	double totalNumberOfPoints = TotalNumberOfRoundsNeeded * numberOfPointsInOneRound;
-	long long nanoDuration = (long long)duration * 1000000;
+	long long nanoDuration = duration * 1000000;
     long long durationPerPoint = nanoDuration / totalNumberOfPoints;
 	
 	for (int i = 0; i < totalNumberOfPoints && 
@@ -161,7 +161,7 @@ POINT Input::spinnerMove(POINT scaledCenter, int duration) {
 
 POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, float pointsMultiplierY, POINT cursorStartPoints) {
 	auto globalStartTime = chrono::high_resolution_clock::now();
-	long long nanoDuration = (long long)currentHitObject.sliderDuration * 1000000;
+	long long nanoDuration = currentHitObject.sliderDuration * 1000000; 
 	bool reverse = false;
 	FPointS unscaledEndPoint;
 	if (currentHitObject.sliderType == 'L') {
@@ -315,46 +315,4 @@ POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, flo
 //	scaledEndPoint.x = unscaledEndPoint.x * pointsMultiplierX + cursorStartPoints.x;
 //	scaledEndPoint.y = unscaledEndPoint.y * pointsMultiplierY + cursorStartPoints.y;
 //	return scaledEndPoint;
-//}
-
-// function that returns a point on the curve base on t given
-//POINT Input::bezierCurve(vector<CurvePointsS> curvePoints, float t) {
-//	double bx = 0;
-//	double by = 0;
-//	int n = curvePoints.size() - 1; // degree
-//	if (n == 1) { // if linear
-//		bx = (1 - t) * curvePoints.at(0).x + t * curvePoints.at(1).x;
-//		by = (1 - t) * curvePoints.at(0).y + t * curvePoints[1].y;
-//	}
-//	else if (n == 2) { // if quadratic
-//		bx = (1 - t) * (1 - t) * curvePoints.at(0).x + 2 * (1 - t) * t * curvePoints.at(1).x + t * t * curvePoints.at(2).x;
-//		by = (1 - t) * (1 - t) * curvePoints.at(0).y + 2 * (1 - t) * t * curvePoints.at(1).y + t * t * curvePoints.at(2).y;
-//	}
-//	else if (n == 3) { // if cubic
-//		bx = (1 - t) * (1 - t) * (1 - t) * curvePoints.at(0).x + 3 * (1 - t) * (1 - t) * t * curvePoints.at(1).x + 3 * (1 - t) * t * t * curvePoints.at(2).x + t * t * t * curvePoints.at(3).x;
-//		by = (1 - t) * (1 - t) * (1 - t) * curvePoints.at(0).y + 3 * (1 - t) * (1 - t) * t * curvePoints.at(1).y + 3 * (1 - t) * t * t * curvePoints.at(2).y + t * t * t * curvePoints.at(3).y;
-//	}
-//	else {
-//		for (int i = 0; i <= n; i++) {
-//			bx += Input::binomialCoef(n, i) * pow(1 - t, n - i) * pow(t, i) * curvePoints.at(i).x;
-//			by += Input::binomialCoef(n, i) * pow(1 - t, n - i) * pow(t, i) * curvePoints.at(i).y;
-//		}
-//	}
-//	POINT p;
-//	p.x = bx;
-//	p.y = by;
-//	return p;
-//}
-//
-//// just some math formula
-//double Input::binomialCoef(int n, int k) {
-//	double r = 1;
-//	if (k > n) {
-//		return 0;
-//	}
-//	for (int d = 1; d <= k; d++) {
-//		r *= n--;
-//		r /= d;
-//	}
-//	return r;
 //}

@@ -21,8 +21,8 @@ public:
 
 	// functions
 	static void sentKeyInput(char key, bool pressed);
-	static void circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, int duration);
-	static POINT spinnerMove(POINT center, int duration);
+	static void circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, double duration);
+	static POINT spinnerMove(POINT center, double duration);
 	static POINT sliderMove(HitObject currentHitObject, float pointsMultiplierX, float pointsMultiplierY, POINT cursorStartPoints);
 	//static POINT sliderBezierMove(HitObject currentHitObject, float pointsMultiplierX, float pointsMultiplierY, POINT cursorStartPoints);
 	//static POINT sliderCircleMove(HitObject currentHitObject, float pointsMultiplierX, float pointsMultiplierY, POINT cursorStartPoints);

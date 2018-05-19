@@ -37,7 +37,7 @@ public:
 	float pixelLength;
 	bool sliderPointsAreCalculated;
 	// calculated variables
-	int sliderDuration;
+	double sliderDuration;
 	vector<FPointS> pointsOnCurve;
 
 	// Spinners:

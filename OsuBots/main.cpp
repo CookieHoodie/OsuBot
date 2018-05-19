@@ -602,23 +602,25 @@ int main() {
 	catch (OsuBotException e) {
 		cerr << "OsuBotException: " << e.what() << endl;
 	}
-	catch (const std::runtime_error& re)
+	catch (const runtime_error& re)
 	{
 		// speciffic handling for runtime_error
-		std::cerr << "Runtime error: " << re.what() << std::endl;
+		cerr << "Runtime error: " << re.what() << endl;
 	}
-	catch (const std::exception& ex)
+	catch (const exception& ex)
 	{
 		// speciffic handling for all exceptions extending std::exception, except
 		// std::runtime_error which is handled explicitly
-		std::cerr << "Error occurred: " << ex.what() << std::endl;
+		cerr << "Error occurred: " << ex.what() << endl;
 	}
 	catch (...)
 	{
 		// catch any other errors (that we have no information about)
-		std::cerr << "Unknown failure occurred. Possible memory corruption" << std::endl;
+		cerr << "Unknown failure occurred. Possible memory corruption" << endl;
 	}
-
+	HWND consoleHandle = GetConsoleWindow();
+	SetForegroundWindow(consoleHandle);
+	cout << "Please restart the program!" << endl;
 	// TODO: FindWindowA that has osu! inside;
 
 	//Beatmap test = Beatmap(fileName);
