@@ -1,5 +1,5 @@
 # New updates
-Certain stack circles problems are solved
+Stack circles problems are solved, only certain special cases (which are pretty unlikely to cause problem) are not accounted for.
 
 DT and HR DT are now supported!
 
