@@ -69,6 +69,37 @@ string ProcessTools::getWindowTextString(HWND windowHandle) {
 	return string(ctitle);
 }
 
+string ProcessTools::promptToChooseFileAndGetPath(LPCWSTR customTitle) {
+	IFileDialog *pfd;
+	string returnStr = "";
+	if (SUCCEEDED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE))) 
+	{
+		if (SUCCEEDED(CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pfd))))
+		{
+			if (customTitle != L"") {
+				pfd->SetTitle(customTitle);
+			}
+			if (SUCCEEDED(pfd->Show(NULL)))
+			{
+				IShellItem *psi;
+				if (SUCCEEDED(pfd->GetResult(&psi)))
+				{
+					PWSTR pszFilePath;
+					if (SUCCEEDED(psi->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath)))
+					{
+						wstring wpath(pszFilePath);
+						returnStr = string(wpath.begin(), wpath.end());
+					}
+					psi->Release();
+				}
+			}
+			pfd->Release();
+		}
+		CoUninitialize();
+	}
+	return returnStr;
+}
+
 //int ProcessTools::writeToMemory(DWORD processID, void* memoryAddress, byte* input, int size)
 //// write value in input to memoryAddress given
 //// size of input determines how many bytes of data to write to the specific address

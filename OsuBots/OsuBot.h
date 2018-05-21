@@ -12,6 +12,7 @@
 #include "HitObject.h"
 #include "Input.h"
 #include "OsuDbParser.h"
+#include "Config.h"
 
 using namespace std;
 

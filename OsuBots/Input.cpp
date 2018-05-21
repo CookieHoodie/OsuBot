@@ -1,9 +1,5 @@
 #include "Input.h"
 
-// Change these constants to suit your keys
-const char Input::LEFT_KEY = 'q';
-const char Input::RIGHT_KEY = 'w';
-
 // credit to Aixxe from https://aixxe.net/2016/10/osu-game-hacking
 void Input::sentKeyInput(char key, bool pressed) {
 	// send key press to screen

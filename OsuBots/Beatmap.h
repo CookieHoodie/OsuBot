@@ -11,10 +11,10 @@
 #include "beatmapRelatedStructs.h"
 #include "HitObject.h"
 #include "TimingPoint.h"
+#include "Config.h"
 
 using namespace std;
 //namespace fs = std::experimental::filesystem; // for C++ 14
-
 
 // ------------------------------------------------Beatmap class---------------------------------------------------
 class Beatmap
@@ -24,7 +24,6 @@ public:
 	Beatmap(string fullPathAfterSongsFolder);
 
 	// variables
-	const static string FOLDERPATH; 
 	//string fileName; // format: "xxxxxxxx.osu"   *remember .osu !!!
 	string fullPathBeatmapFileName;
 	bool allSet; // for checking if beatmap is successfully set

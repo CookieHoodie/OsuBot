@@ -18,7 +18,7 @@ OsuBot::OsuBot(wchar_t* processName)
 	(this)->processID = ProcessTools::getProcessID(processName);
 	if ((this)->processIsOpen()) {
 		cout << "Start parsing data from osu!.db in separate thread..." << endl;
-		thread osuDbThread(&OsuDbParser::startParsingData, &(this)->osuDbMin, OSUROOTPATH + "osu!.db", false);
+		thread osuDbThread(&OsuDbParser::startParsingData, &(this)->osuDbMin, Config::OSUROOTPATH + "osu!.db", false);
 		cout << "Storing process handle..." << endl;
 		(this)->osuHandle = OpenProcess(PROCESS_ALL_ACCESS, false, (this)->processID);
 		if ((this)->osuHandle == NULL) { throw OsuBotException("Failed to get osuHandle."); }
@@ -45,7 +45,7 @@ OsuBot::OsuBot(wchar_t* processName)
 		cout << "-----------------Initialization done!-----------------"  << "Time taken: " << roundf(chrono::duration<float>(chrono::high_resolution_clock::now() - t_start).count() * 100) / 100 << "s" <<endl << endl;
 	}
 	else {
-		throw OsuBotException("Failed to get processID. Make sure the program is running!");
+		throw OsuBotException("Failed to get processID. Make sure osu! is running!");
 	}
 
 }
@@ -211,15 +211,15 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 
 		if (hitObject.type == HitObject::TypeE::circle) {
 			if (leftKeysTurn) {
-				Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
+				Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
 				Sleep(10); 
-				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
+				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
-				Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
+				Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
 				Sleep(10); 
-				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
+				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
 		}
@@ -228,15 +228,15 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 				hitObject.sliderDuration = hitObject.sliderDuration / 1.5;
 			}
 			if (leftKeysTurn) {
-				Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
+				Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
 				Sleep(hitObject.sliderDuration); 
-				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
+				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
-				Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
+				Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
 				Sleep(hitObject.sliderDuration); 
-				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
+				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
 		}
@@ -249,23 +249,23 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 				moveDuration = hitObject.spinnerEndTime - hitObject.time;
 			}
 			if (leftKeysTurn) {
-				Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
+				Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
 				Sleep(moveDuration);
-				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
+				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
-				Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
+				Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
 				Sleep(moveDuration);
-				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
+				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
 		}
 	}
 
 	// release both key to prevent unwanted behaviour
-	Input::sentKeyInput(Input::LEFT_KEY, false);
-	Input::sentKeyInput(Input::RIGHT_KEY, false);
+	Input::sentKeyInput(Config::LEFT_KEY, false);
+	Input::sentKeyInput(Config::RIGHT_KEY, false);
 }
 
 void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) { 
@@ -482,10 +482,10 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 		
 		// press key when reach the time
 		if (leftKeysTurn) {
-			Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
+			Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
 		}
 		else {
-			Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
+			Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
 		}
 		
 		if (currentHitObject.type == HitObject::TypeE::slider) {
@@ -508,11 +508,11 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 			POINT endPoint = Input::sliderMove(currentHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
 			// after the slider ends, release the key
 			if (leftKeysTurn) {
-				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
+				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
-				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
+				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
 			double moveDuration;
@@ -534,11 +534,11 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 			}
 			POINT endPoint = Input::spinnerMove(center, moveDuration);
 			if (leftKeysTurn) {
-				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
+				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
-				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
+				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
 			//double moveDuration;
@@ -556,11 +556,11 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 			// should be at least 10 millisecs 
 			Sleep(10); 
 			if (leftKeysTurn) {
-				Input::sentKeyInput(Input::LEFT_KEY, false); // release left key
+				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
-				Input::sentKeyInput(Input::RIGHT_KEY, false); // release right key
+				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
 			double moveDuration;
@@ -584,10 +584,10 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 		}
 	}
 	if (leftKeysTurn) {
-		Input::sentKeyInput(Input::LEFT_KEY, true); // press left key
+		Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
 	}
 	else {
-		Input::sentKeyInput(Input::RIGHT_KEY, true); // press right key
+		Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
 	}
 
 	if (lastHitObject.type == HitObject::TypeE::slider) {
@@ -622,8 +622,8 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 
 	Sleep(10); // account for circle.
 	// release both key to prevent unwanted behaviour
-	Input::sentKeyInput(Input::LEFT_KEY, false);
-	Input::sentKeyInput(Input::RIGHT_KEY, false);
+	Input::sentKeyInput(Config::LEFT_KEY, false);
+	Input::sentKeyInput(Config::RIGHT_KEY, false);
 	setPointsOnCurveThread.join(); // dun forget to join the thread b4 exiting
 }
 
@@ -984,6 +984,8 @@ void OsuBot::start() {
 			cin >> input;
 		}
 		int tempModChoice = stoi(input);
+		// well, the mods are supposed to be determined using bitwise operator '|'
+		// but whatever
 		switch (tempModChoice) {
 		//case 1:
 			//modChoice = 0

@@ -147,6 +147,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Beatmap.h" />
+    <ClInclude Include="Config.h" />
     <ClInclude Include="Functions.h" />
     <ClInclude Include="beatmapRelatedStructs.h" />
     <ClInclude Include="HitObject.h" />
@@ -159,6 +160,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Beatmap.cpp" />
+    <ClCompile Include="Config.cpp" />
     <ClCompile Include="Functions.cpp" />
     <ClCompile Include="HitObject.cpp" />
     <ClCompile Include="Input.cpp" />

@@ -6,9 +6,6 @@
 
 using namespace std;
 
-// ---------------------------------------- CONSTANTS ----------------------------------
-const static string OSUROOTPATH = "C:\\Users\\ong\\AppData\\Local\\osu!\\";
-
 // ----------------------------------------For HitObject-----------------------------------------
 typedef struct FPoint {
 	float x;

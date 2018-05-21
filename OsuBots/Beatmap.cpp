@@ -1,14 +1,11 @@
 #include "Beatmap.h"
 
-// path to osu songs folder. Change this if the directory changes
-const string Beatmap::FOLDERPATH = OSUROOTPATH + "Songs\\";
-
 // -----------------------------------Constructor & Destructor---------------------------------------
 Beatmap::Beatmap(string fullPathAfterSongsFolder)
 {
 	//(this)->fileName = fileName;
 	//(this)->setFullPathBeatmapFileName(); // deprecated
-	(this)->fullPathBeatmapFileName = Beatmap::FOLDERPATH + fullPathAfterSongsFolder;
+	(this)->fullPathBeatmapFileName = Config::SONGFOLDER + fullPathAfterSongsFolder;
 	(this)->processBeatmap();
 }
 
@@ -125,6 +122,7 @@ void Beatmap::processBeatmap() { // only depends on (this)->fullPathBeatmapFileN
 	}
 }
 
+// from https://github.com/ppy/osu/blob/9e7728d6b38dfdd61e0891ca7a9277fb18775c28/osu.Game/Beatmaps/BeatmapDifficulty.cs
 double Beatmap::calcApproachWindow(double AR, double min, double mid, double max) {
 	if (AR > 5)
 		return mid + (max - mid) * (AR - 5) / 5;

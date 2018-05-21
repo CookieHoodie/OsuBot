@@ -6,10 +6,6 @@ DT and HR DT are now supported!
 # OsuBot
 A bot which, for now, does auto, relax, and autopilot mod in osu!. So far this has not been tested in multiplayer mode.
 
-This works well with fast computer. If you have a slow computer (like I do) you might encounter few misses and 100s. 
-The bot is likely to behave abnormally for those (super) weird unranked and loved maps, and even weird ranked map like this one https://osu.ppy.sh/beatmapsets/1785#osu/21010 .
-And also, if the cursor position does not sync with the osu! client screen, try to restart the program (and also osu! client if the problem persists).
-
 Please use this for educational purpose, not real cheating in the game.
 
 Most of the codes come with comments, but feel free to ask me if you have any question regarding the code!
@@ -27,6 +23,9 @@ Contain general functions which are shared between classes
 ### ProcessTools class:
 Contain functions dealing with windows processes
 
+### Config namespace:
+Place where constants such as OSUROOTPATH and LEFT_KEY are stored which can be accessed by other classes
+
 ### SigScanner class:
 Class dedicated to signature scanning
 
@@ -39,13 +38,14 @@ Class used for parsing osu!.db data into an object for faster access to each bea
 ### OsuBot class:
 Actual class that implements bots and interface
 
-# Usage
-Change the constant OSUROOTPATH in beatmapRelatedStructs.h to match your path
-
-Change LEFT_KEY and RIGHT_KEY in Input.cpp to match your hitkeys
-
 # Known issues
-Currently none except those mentioned above. If there's any more bug pls contact me for fix.
+This works well with fast computer. If you have a slow computer (like I do) you might encounter misses and 100s. 
+The bot is likely to behave abnormally for those (super) weird unranked and loved maps, and even weird ranked map like this one https://osu.ppy.sh/beatmapsets/1785#osu/21010 .
+
+Another potential problem is when your system is not in English or the path to your osu!.exe contains non-English characters. I got really annoyed when dealing with that so I just assume that's not the case. This also doesn't work if you choose Unicode instead of English in your osu setting.
+
+Sometimes, the cursor position does not sync with the osu! client screen (for some reasons). If that happens, try to restart the program (and also osu! client if the problem persists).
+If signature scanning take too long to finish (say more than 30s), you might need to restart your osu! client and try again.
 
 # Support
 If you find this useful, please support me to help me get a better laptop! It's a pain in the butt to program using this crappy laptop but I can't afford to buy one cuz I'm still a student :(
