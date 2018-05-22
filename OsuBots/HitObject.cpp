@@ -28,14 +28,6 @@ void HitObject::processHitObjectLine(string hitObjectLine, vector<TimingPoint> T
 		string curvePointsString = elements.at(5).erase(0, 2); // erase sliderType and preceding '|' --> x:y|x:y|...
 		vector<string> pointsString = Functions::split(curvePointsString, '|'); // --> x:y, x:y, ...
 
-		//// old storing method. If this is used, change (this)->CurvePoints to type of vector<CurvePointsS> instead
-		//for (string points : pointsString) {
-		//	int index = points.find(':');
-		//	int x = stoi(points.substr(0, index)); // getting x and y independently
-		//	int y = stoi(points.substr(index + 1));
-		//	(this)->CurvePoints.push_back(CurvePointsS(x, y)); // storing curvePoints into member vector
-		//}
-		
 		// vector for grouping and seperating connected curvePoints (for Bezier curve)
 		vector<CurvePointsS> tempVector;
 		// storing currentObject.x and y in the first element of curvePointV for easier calculation

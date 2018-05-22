@@ -69,6 +69,7 @@ string ProcessTools::getWindowTextString(HWND windowHandle) {
 	return string(ctitle);
 }
 
+// prompt user to choose file and return the filename in string
 string ProcessTools::promptToChooseFileAndGetPath(LPCWSTR customTitle) {
 	IFileDialog *pfd;
 	string returnStr = "";

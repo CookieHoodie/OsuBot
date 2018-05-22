@@ -19,7 +19,6 @@ vector<string> Functions::split(const string &s, char delim) {
 bool Functions::almostEquals(const float a, const float b, const float tolerance)
 {
 	return abs(a - b) < tolerance;
-	//return (a + tolerance >= b) && (a - tolerance <= b);
 }
 
 FPointS Functions::bezierCurve(vector<CurvePointsS> curvePoints, float t) {

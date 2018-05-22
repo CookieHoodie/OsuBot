@@ -11,10 +11,11 @@ namespace Config
 	string SONGFOLDER = "";
 }
 
+// load constants from file into Config namespace
 void Config::loadConfigFile(string filename)
 {
 	ifstream configTxtReader(filename);
-	
+	// if file exists, read from the file
 	if (configTxtReader.is_open()) {
 		string line;
 		while (getline(configTxtReader, line))
@@ -33,6 +34,7 @@ void Config::loadConfigFile(string filename)
 		Config::SONGFOLDER = Config::OSUROOTPATH + "Songs\\";
 		configTxtReader.close();
 	}
+	// else, ask for input and create file
 	else {
 		cout << "Initializing settings for first time use..." << endl << endl;
 		string osuRootPath;
@@ -47,14 +49,14 @@ void Config::loadConfigFile(string filename)
 		size_t found = osuRootPath.find_last_of("/\\");
 		osuRootPath = osuRootPath.substr(0, found + 1);
 
-		cout << "Enter the 'left click' key according to your settings in osu!" << endl;
+		cout << "Enter the 'left click' key according to your settings in osu! (default is 'z')" << endl;
 		cin >> leftKey;
 		leftKey = static_cast<char>(tolower(leftKey));
 
 		cin.clear();  //clear errors/bad flags on cin
 		cin.ignore(cin.rdbuf()->in_avail(), '\n');//precise amount of ignoring
 
-		cout << "Enter the 'right click' key according to your settings in osu!" << endl;
+		cout << "Enter the 'right click' key according to your settings in osu! (default is 'x')" << endl;
 		cin >> rightKey;
 		rightKey = static_cast<char>(tolower(rightKey));
 
@@ -69,9 +71,10 @@ void Config::loadConfigFile(string filename)
 
 			// call itself to read data this time
 			loadConfigFile(filename);
+			system("pause");
 		}
 		else {
-			throw runtime_error("Failed to create config.txt");
+			throw runtime_error("Failed to create config.txt. Probably file permission issue");
 		}
 	}
 }

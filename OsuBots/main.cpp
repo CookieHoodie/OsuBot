@@ -10,7 +10,9 @@ int main() {
 	wchar_t* processName = L"osu!.exe";
 	
 	try {
+		cout << "Reading constants..." << endl;
 		Config::loadConfigFile("config.txt");
+		system("cls");
 		OsuBot bot = OsuBot(processName);
 		bot.start();
 	}
@@ -33,9 +35,9 @@ int main() {
 		// catch any other errors (that we have no information about)
 		cerr << "Unknown failure occurred. Possible memory corruption" << endl;
 	}
-
 	HWND consoleHandle = GetConsoleWindow();
 	SetForegroundWindow(consoleHandle);
-	cout << "Please restart the program!" << endl;
+	cout << "Please restart the program!" << endl; 
+	system("pause");
 }
 

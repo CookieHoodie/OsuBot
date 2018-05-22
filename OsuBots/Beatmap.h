@@ -16,7 +16,6 @@
 using namespace std;
 //namespace fs = std::experimental::filesystem; // for C++ 14
 
-// ------------------------------------------------Beatmap class---------------------------------------------------
 class Beatmap
 {
 public:
@@ -24,7 +23,6 @@ public:
 	Beatmap(string fullPathAfterSongsFolder);
 
 	// variables
-	//string fileName; // format: "xxxxxxxx.osu"   *remember .osu !!!
 	string fullPathBeatmapFileName;
 	bool allSet; // for checking if beatmap is successfully set
 	GeneralS General;
@@ -45,7 +43,3 @@ private:
 	void processBeatmap();
 	//void setFullPathBeatmapFileName(); // deprecated
 };
-// -------------------------------------------------------End of Beatmap class----------------------------------------
-
-
-// TODO: support mods (DT might change the timeRanges and so on)

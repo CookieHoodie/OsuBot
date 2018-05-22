@@ -16,7 +16,7 @@
 
 using namespace std;
 
-// ***Exception handling ONLY occurs in this class!
+// Most exception handling occurs in this class
 #include <stdexcept>
 class OsuBotException : public runtime_error
 {
@@ -43,10 +43,6 @@ public:
 	// functions
 	void start(); 
 
-	// -----------------------Testing area, delete when finished------------------------------
-	void testTime();
-	void loadBeatmap(string fileName); 
-	// -------------------------End of testing area--------------------------------------
 private:
 	// --------------------------variables-----------------------------
 	// Process related variables

@@ -160,6 +160,7 @@ POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, flo
 	long long nanoDuration = currentHitObject.sliderDuration * 1000000; 
 	bool reverse = false;
 	FPointS unscaledEndPoint;
+	// if 'L' type, pointsOnCurve is not set, so use circleLinearMove instead
 	if (currentHitObject.sliderType == 'L') {
 		CurvePointsS start = currentHitObject.CurvePoints.at(0).front();
 		POINT startPoint;
@@ -226,89 +227,3 @@ POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, flo
 	scaledEndPoint.y = unscaledEndPoint.y * pointsMultiplierY + cursorStartPoints.y;
 	return scaledEndPoint;
 }
-
-// Two supposedly different function is now same, so combine them to sliderMove function
-//POINT Input::sliderCircleMove(HitObject currentHitObject, float pointsMultiplierX, float pointsMultiplierY, POINT cursorStartPoints) {
-//	auto globalStartTime = chrono::high_resolution_clock::now();
-//	long long nanoDuration = (long long)currentHitObject.sliderDuration * 1000000;
-//	POINT unscaledEndPoint; // for tracking the endPoint of slider (which varies if repeated)
-//	long long nanosecPerY = nanoDuration / (currentHitObject.pointsOnCurve.size() * currentHitObject.repeat);
-//	bool reverse = false;
-//	for (int r = 0; r < currentHitObject.repeat; r++) {
-//		if (!reverse) { // go from cursor start to cursor end
-//			for (int i = 0; i < currentHitObject.pointsOnCurve.size()
-//				&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration; i++) {
-//				auto t_start = chrono::high_resolution_clock::now();
-//				POINT point = currentHitObject.pointsOnCurve.at(i);
-//				point.x = point.x * pointsMultiplierX + cursorStartPoints.x;
-//				point.y = point.y * pointsMultiplierY + cursorStartPoints.y;
-//				SetCursorPos(point.x, point.y);
-//				while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < nanosecPerY
-//					&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration) {}
-//			}
-//			unscaledEndPoint = currentHitObject.pointsOnCurve.back();
-//			reverse = true;
-//		}
-//		else { // move back from cursor end to cursor start
-//			for (int i = currentHitObject.pointsOnCurve.size(); i-- > 0
-//				&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration;) {
-//				auto t_start = chrono::high_resolution_clock::now();
-//				POINT point = currentHitObject.pointsOnCurve.at(i);
-//				point.x = point.x * pointsMultiplierX + cursorStartPoints.x;
-//				point.y = point.y * pointsMultiplierY + cursorStartPoints.y;
-//				SetCursorPos(point.x, point.y);
-//				while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < nanosecPerY
-//					&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration) {}
-//				
-//			}
-//			unscaledEndPoint = currentHitObject.pointsOnCurve.front();
-//			reverse = false;
-//		}
-//	}
-//	POINT scaledEndPoint; // scale and return real end point
-//	scaledEndPoint.x = unscaledEndPoint.x * pointsMultiplierX + cursorStartPoints.x;
-//	scaledEndPoint.y = unscaledEndPoint.y * pointsMultiplierY + cursorStartPoints.y;
-//	return scaledEndPoint;
-//}
-//
-//POINT Input::sliderBezierMove(HitObject currentHitObject, float pointsMultiplierX, float pointsMultiplierY, POINT cursorStartPoints) {
-//	auto globalStartTime = chrono::high_resolution_clock::now();
-//	long long nanoDuration = (long long)currentHitObject.sliderDuration * 1000000;
-//	bool reverse = false;
-//	POINT unscaledEndPoint;
-//	long long nanoSecPerDistance = (nanoDuration) / (currentHitObject.pointsOnCurve.size() * currentHitObject.repeat);
-//	for (int i = 0; i < currentHitObject.repeat; i++) {
-//		if (!reverse) {
-//			for (int j = 0; j < currentHitObject.pointsOnCurve.size()
-//				&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration; j++) {
-//				auto t_start = chrono::high_resolution_clock::now();
-//				POINT point = currentHitObject.pointsOnCurve.at(j);
-//				int scaledX = point.x * pointsMultiplierX + cursorStartPoints.x;
-//				int scaledY = point.y * pointsMultiplierY + cursorStartPoints.y;
-//				SetCursorPos(scaledX, scaledY);
-//				while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < nanoSecPerDistance
-//					&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration) {}
-//			}
-//			reverse = true;
-//			unscaledEndPoint = currentHitObject.pointsOnCurve.back();
-//		}
-//		else {
-//			for (int j = currentHitObject.pointsOnCurve.size(); j-- > 0
-//				&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration;) {
-//				auto t_start = chrono::high_resolution_clock::now();
-//				POINT currentPoint = currentHitObject.pointsOnCurve.at(j);
-//				int scaledX = currentPoint.x * pointsMultiplierX + cursorStartPoints.x;
-//				int scaledY = currentPoint.y * pointsMultiplierY + cursorStartPoints.y;
-//				SetCursorPos(scaledX, scaledY);
-//				while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < nanoSecPerDistance
-//					&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration) {}
-//			}
-//			reverse = false;
-//			unscaledEndPoint = currentHitObject.pointsOnCurve.front();
-//		}
-//	}
-//	POINT scaledEndPoint; // scale and return real end point
-//	scaledEndPoint.x = unscaledEndPoint.x * pointsMultiplierX + cursorStartPoints.x;
-//	scaledEndPoint.y = unscaledEndPoint.y * pointsMultiplierY + cursorStartPoints.y;
-//	return scaledEndPoint;
-//}

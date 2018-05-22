@@ -18,7 +18,7 @@ OsuBot::OsuBot(wchar_t* processName)
 	(this)->processID = ProcessTools::getProcessID(processName);
 	if ((this)->processIsOpen()) {
 		cout << "Start parsing data from osu!.db in separate thread..." << endl;
-		thread osuDbThread(&OsuDbParser::startParsingData, &(this)->osuDbMin, Config::OSUROOTPATH + "osu!.db", false);
+		thread osuDbThread(&OsuDbParser::startParsingData, &(this)->osuDbMin, Config::OSUROOTPATH + "osu!.db");
 		cout << "Storing process handle..." << endl;
 		(this)->osuHandle = OpenProcess(PROCESS_ALL_ACCESS, false, (this)->processID);
 		if ((this)->osuHandle == NULL) { throw OsuBotException("Failed to get osuHandle."); }
@@ -654,6 +654,7 @@ void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int 
 			beatmap.HitObjects.at(index).y = 384 - beatmap.HitObjects.at(index).y;
 		}
 
+		// modifications for stacked hitObjects
 		// not same as last coordinate (ie. no stack or stacking has ended)
 		if (previousStackedPoint.x != hitObject.x || previousStackedPoint.y != hitObject.y || hitObject.time - previousTime > stackTimeThreshold || hitObject.type == HitObject::TypeE::spinner) {
 			// stacking occurs
@@ -846,9 +847,6 @@ void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int 
 				// the easiest way here is to get the passing points on curve, 
 				// and then move from each point a fixed distance and store the equidistant points into another array
 				// refer to: https://love2d.org/forums/viewtopic.php?t=82612
-				// May consider using another method for optimization 
-
-				//vector<FPointS> pointsOnCurve; // store points on the bezier curve in 1st loop
 
 				double distanceConst = 0.5; // define step size. large == inaccurate and vice versa
 				double totalDistance = 0; // for resolving overshooting
@@ -896,7 +894,7 @@ void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int 
 							}
 							// this line is disable as it is more accurate without considering every exact point on bezier curve
 							//HitObjects.at(index).pointsOnCurve.push_back(p);
-							// break out of calculation if exceeds pixelLength
+							// break out of calculation if exceeds pixelLength to avoid overshooting
 							if (totalDistance >= hitObject.pixelLength) {
 								break;
 							}
@@ -1135,35 +1133,5 @@ void OsuBot::start() {
 	}
 }
 
-// ---------------------------------------Testing area, delete when finish----------------------------------
-void OsuBot::testTime() {
-	cout << ProcessTools::getWindowTextString((this)->windowHandle) << endl;
-	cout << (this)->getCurrentAudioTime() << endl;
-	cout << (this)->getPauseSignal() << endl;
-}
-
-// for testing
-void OsuBot::loadBeatmap(string fileName) {
-	thread checkIfIsPlaying(&OsuBot::updateIsPlaying, this);
-	cout << "Loading beatmap..." << endl;
-	Beatmap b = Beatmap(fileName);
-	if (b.allSet) {
-		cout << "Starting: " << fileName << endl;
-		//(this)->modRelax(b);
-		// TODO: solve rest time cursor move instantly
-		//(this)->modAutoPilot(b);
-		(this)->modAuto(b, 0);
-		checkIfIsPlaying.join();
-		cout << "Ending: " << fileName << endl << endl;
-	}
-	else {
-		throw OsuBotException("Error loading beatmap: " + b.fullPathBeatmapFileName);
-	}
-}
-
 // TODO2:
 //		then implement if the cursor is within the circle, click early for better for relax mode.
-
-// TODO: 
-//		stackleniency!
-//		bluenation slider time problem

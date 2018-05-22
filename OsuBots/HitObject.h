@@ -3,12 +3,12 @@
 #include <vector>
 #include <string>
 #include <iterator>
+#include <Windows.h>
+#include <math.h>
 
 #include "Functions.h"
 #include "TimingPoint.h"
 #include "beatmapRelatedStructs.h"
-#include "windows.h"
-#include "math.h"
 
 using namespace std;
 
@@ -50,10 +50,5 @@ private:
 	// calculations
 	// calculate timing points related
 	float getRealCurrentMPB(int hitObjectTime, vector<TimingPoint> TimingPoints, int* timingPointIndex);
-	// calculate sliders' pointsOnCurve
-	//void calcAndSetPointsOnCurve();
-	// bezier curve calculations
-	//static double binomialCoef(int n, int k);
-	//static POINT bezierCurve(vector<CurvePointsS> curvePointsV, float t); 
 };
 
