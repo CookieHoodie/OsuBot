@@ -459,6 +459,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 		HitObject nextHitObject = beatmap.HitObjects.at(i);
 		POINT currentPoint = (this)->getScaledPoints(currentHitObject.x, currentHitObject.y);
 		POINT nextPoint = (this)->getScaledPoints(nextHitObject.x, nextHitObject.y);
+
 		// at this point, the cursor is already on the hitObject.
 		// If it is DT or HR DT, timeRange300 is used to offset the rapid speed which causes misses and 100s
 		if (mod == 64 || mod == 80) {
@@ -649,39 +650,6 @@ void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int 
 		// hitObject is a copy, HitObjects.at(index) is a reference
 		auto hitObject = beatmap.HitObjects.at(index);
 
-		// change all hitObjects y coordinate if it's HR
-		if (mod == 16 || mod == 80) {
-			beatmap.HitObjects.at(index).y = 384 - beatmap.HitObjects.at(index).y;
-		}
-
-		// modifications for stacked hitObjects
-		// not same as last coordinate (ie. no stack or stacking has ended)
-		if (previousStackedPoint.x != hitObject.x || previousStackedPoint.y != hitObject.y || hitObject.time - previousTime > stackTimeThreshold || hitObject.type == HitObject::TypeE::spinner) {
-			// stacking occurs
-			// 3 stacks is not gonna affect much but the bot might miss if >3, so only account for >3
-			if (stackCount > 3) {
-				HitObject baseHitObject = beatmap.HitObjects.at(index - 1);
-				for (int i = 1; i < stackCount; i++) {
-					// update the HitObjects
-					beatmap.HitObjects.at(index - 1 - i).x = baseHitObject.x - i * stackOffset;
-					beatmap.HitObjects.at(index - 1 - i).y = baseHitObject.y - i * stackOffset;
-				}
-			}
-			// reset and initialize first object if it's first
-			previousStackedPoint.x = hitObject.x;
-			previousStackedPoint.y = hitObject.y;
-			previousTime = hitObject.time;
-			stackCount = 1;
-		}
-		// if stack
-		else {
-			// update then increment stackCount
-			previousStackedPoint.x = hitObject.x;
-			previousStackedPoint.y = hitObject.y;
-			previousTime = hitObject.time;
-			stackCount++;
-		}
-		
 		// calculating points on curve
 		if (hitObject.type == HitObject::TypeE::slider) {
 			if (hitObject.sliderType == 'P') {
@@ -714,38 +682,21 @@ void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int 
 				auto bSq = pow(ax - cx, 2) + pow(ay - cy, 2);
 				auto cSq = pow(ax - bx, 2) + pow(ay - by, 2);
 
-				// disable this as this might cause problem
-				//// Account for "degenerate triangle" curve according to official code
-				//if (Functions::almostEquals(aSq, 0) || Functions::almostEquals(bSq, 0) || Functions::almostEquals(cSq, 0)) {
-				//	beatmap.HitObjects.at(index).sliderType = 'B'; // fake sliderType to 'B'
-				//	index--; // decrease index by 1 so that next loop goes to same hitObject but this time goes into 'B' if block
-				//	continue;
-				//}
+				// Account for "degenerate triangle" curve according to official code
+				if (Functions::almostEquals(aSq, 0) || Functions::almostEquals(bSq, 0) || Functions::almostEquals(cSq, 0)) {
+					beatmap.HitObjects.at(index).sliderType = 'B'; // fake sliderType to 'B'
+					index--; // decrease index by 1 so that next loop goes to same hitObject but this time goes into 'B' if block
+					continue;
+				}
 
-				// 'P' curve can be smooth now after changing the tolerance, so "faking" is no longer needed
-				//auto linearDistance = sqrt(bSq);
-				//auto circleDistance = sqrt(aSq) + sqrt(cSq);
-				//// own calculation which checks if the circle is almost like linear
-				//if (Functions::almostEquals(linearDistance, circleDistance, 0.5)) { 
-				//	HitObjects.at(index).sliderType = 'L'; // fake that this slider is Linear
-				//	if (mod == 16 || mod == 80) {
-				//		HitObjects.at(index).CurvePoints.front().front().y = 384 - HitObjects.at(index).CurvePoints.front().front().y;
-				//		HitObjects.at(index).CurvePoints.front().back().y = 384 - HitObjects.at(index).CurvePoints.front().back().y;
-				//	}
-				//	HitObjects.at(index).sliderPointsAreCalculated = true;
-				//	continue;
-				//}
-				//// not so linear but still quite linear
-				//else if (Functions::almostEquals(linearDistance, circleDistance, 1.5)) {
-				//	HitObjects.at(index).sliderType = 'B';
-				//	/*vector<HitObject> tempHitObject;
-				//	tempHitObject.push_back(hitObject);
-				//	(this)->calcAndSetPointsOnCurve(tempHitObject, mod, move(futureObj));
-				//	tempHitObject.front().sliderType = 'P';
-				//	HitObjects.at(index) = tempHitObject.front();*/
-				//	index--;
-				//	continue;
-				//}
+				// own calculation which checks if the circle is almost like linear to ensure smoothness
+				auto linearDistance = sqrt(bSq);
+				auto circleDistance = sqrt(aSq) + sqrt(cSq);
+				if (Functions::almostEquals(linearDistance, circleDistance, 0.01)) { 
+					beatmap.HitObjects.at(index).sliderType = 'L'; // fake that this slider is Linear
+					index--; // decrease index by 1 so that next loop goes to same hitObject but this time goes into 'B' if block
+					continue;
+				}
 
 				float s = aSq * (bSq + cSq - aSq);
 				float t = bSq * (aSq + cSq - bSq);
@@ -753,11 +704,11 @@ void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int 
 
 				float sum = s + t + u;
 
-				/*if (Functions::almostEquals(sum, 0)) {
+				if (Functions::almostEquals(sum, 0)) {
 					beatmap.HitObjects.at(index).sliderType = 'B';
 					index--;
 					continue;
-				}*/
+				}
 
 				// get the center of the circle
 				float centerx = (s * ax + t * bx + u * cx) / sum;
@@ -906,6 +857,40 @@ void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int 
 				}
 				beatmap.HitObjects.at(index).sliderPointsAreCalculated = true;
 			}
+		}
+
+		// change all hitObjects y coordinate if it's HR
+		if (mod == 16 || mod == 80) {
+			beatmap.HitObjects.at(index).y = 384 - beatmap.HitObjects.at(index).y;
+		}
+
+		// modifications for stacked hitObjects
+		// it is put here instead of at top so that the recalculation for "degenerated 'P' type slider" can happen
+		// not same as last coordinate (ie. no stack or stacking has ended)
+		if (previousStackedPoint.x != hitObject.x || previousStackedPoint.y != hitObject.y || hitObject.time - previousTime > stackTimeThreshold || hitObject.type == HitObject::TypeE::spinner) {
+			// stacking occurs
+			// 3 stacks is not gonna affect much but the bot might miss if >3, so only account for >3
+			if (stackCount > 3) {
+				HitObject baseHitObject = beatmap.HitObjects.at(index - 1);
+				for (int i = 1; i < stackCount; i++) {
+					// update the HitObjects
+					beatmap.HitObjects.at(index - 1 - i).x = baseHitObject.x - i * stackOffset;
+					beatmap.HitObjects.at(index - 1 - i).y = baseHitObject.y - i * stackOffset;
+				}
+			}
+			// reset and initialize first object if it's first
+			previousStackedPoint.x = hitObject.x;
+			previousStackedPoint.y = hitObject.y;
+			previousTime = hitObject.time;
+			stackCount = 1;
+		}
+		// if stack
+		else {
+			// update then increment stackCount
+			previousStackedPoint.x = hitObject.x;
+			previousStackedPoint.y = hitObject.y;
+			previousTime = hitObject.time;
+			stackCount++;
 		}
 	}
 }
