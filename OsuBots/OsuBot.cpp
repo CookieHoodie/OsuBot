@@ -282,7 +282,17 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 	// move to first hitObject when the beatmap starts
 	HitObject firstHitObject = beatmap.HitObjects.front();
 	// "-300" and "250" following are the preset adjustments as to when the cursor should move
-	while ((this)->getCurrentAudioTime() < firstHitObject.time - 300) {
+	float firstWaitDuration = firstHitObject.time - 300;
+	float firstMoveDuration = 250;
+	// check if the time is too short
+	if (firstWaitDuration <= 0) {
+		firstWaitDuration = 1;
+		firstMoveDuration = firstHitObject.time / 2;
+	}
+	if (mod == 64 || mod == 80) {
+		firstMoveDuration *= 0.67;
+	}
+	while ((this)->getCurrentAudioTime() < firstWaitDuration || (this)->getCurrentAudioTime() > beatmap.HitObjects.back().time) {
 		// while waiting for the time to hit hitObject, constantly check if the map is still being played
 		// if it's not, break out of this function to end the map
 		if ((this)->isPlaying == false) {
@@ -297,12 +307,8 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 	// determine current cursor position and move from there to the firstHitObject
 	POINT currentCursorPos;
 	GetCursorPos(&currentCursorPos);
-	if (mod == 64 || mod == 80) {
-		Input::circleLinearMove(currentCursorPos, startPoint, 250 * 0.67);
-	}
-	else {
-		Input::circleLinearMove(currentCursorPos, startPoint, 250);
-	}
+	Input::circleLinearMove(currentCursorPos, startPoint, firstMoveDuration);
+	
 
 	// starting of first to last hitObject
 	for (int i = 1; i < beatmap.HitObjects.size(); i++) {
@@ -424,9 +430,20 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 	bool leftKeysTurn = true;
 
 	// move to first hitObject when the beatmap starts
-	HitObject firstHitObject = beatmap.HitObjects.front();
 	// "-300" and "250" are the preset adjustments as to when the cursor should move
-	while ((this)->getCurrentAudioTime() < firstHitObject.time - 300) {
+	HitObject firstHitObject = beatmap.HitObjects.front();
+	float firstWaitDuration = firstHitObject.time - 300;
+	float firstMoveDuration = 250;
+	// check if the time is too short
+	if (firstWaitDuration <= 0) {
+		firstWaitDuration = 1;
+		firstMoveDuration = firstHitObject.time / 2;
+	}
+	if (mod == 64 || mod == 80) {
+		firstMoveDuration *= 0.67;
+	}
+	// OR condition becuz if the firstObject time is too short, the value in currentAudioTime is very large garbage value
+	while ((this)->getCurrentAudioTime() < firstWaitDuration || (this)->getCurrentAudioTime() > beatmap.HitObjects.back().time) {
 		// while waiting for the time to hit hitObject, constantly check if the map is still being played
 		// if it's not, break out of this function to end the map
 		if ((this)->isPlaying == false) { 
@@ -441,12 +458,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 	// determine current cursor position and move from there to the firstHitObject
 	POINT currentCursorPos;
 	GetCursorPos(&currentCursorPos);
-	if (mod == 64 || mod == 80) {
-		Input::circleLinearMove(currentCursorPos, startPoint, 250 * 0.67);
-	}
-	else {
-		Input::circleLinearMove(currentCursorPos, startPoint, 250);
-	}
+	Input::circleLinearMove(currentCursorPos, startPoint, firstMoveDuration);
 	
 	// starting of first to last hitObject
 	for (int i = 1; i < beatmap.HitObjects.size(); i++) {
