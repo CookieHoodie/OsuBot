@@ -111,7 +111,7 @@ void OsuBot::updateIsPlaying() {
 	(this)->isPlaying = true;
 	// variable for checking if the time "decreases", which means the player replay the map
 	int lastInstance = (this)->getCurrentAudioTime(); 
-	while (true) {
+	while ((this)->isPlaying) {
 		if (ProcessTools::getWindowTextString((this)->windowTitleHandle) == "osu!") {
 			// if map is exited, set isPlaying to false and exit this loop (and this thread)
 			(this)->isPlaying = false;
@@ -195,6 +195,20 @@ POINT OsuBot::getScaledPoints(int x, int y) {
 }
 
 // -------------------------------------------Mods-------------------------------------------------
+void OsuBot::startMod(Beatmap beatmap, unsigned int bot, unsigned int mod) {
+	switch (bot) {
+	case 1:
+		(this)->modAuto(beatmap, mod);
+		break;
+	case 2:
+		(this)->modAutoPilot(beatmap, mod);
+		break;
+	case 3:
+		(this)->modRelax(beatmap, mod);
+		break;
+	}
+}
+
 void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 	if ((this)->isPlaying == false) { return; }
 	bool leftKeysTurn = true;
@@ -204,7 +218,17 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 			// constantly check if the map is still being played
 			// if it's not, break out of this function to end the map
 			if ((this)->isPlaying == false) { return; }
-			if (((this)->getCurrentAudioTime() > hitObject.time - beatmap.timeRange300)) {
+			else if (GetAsyncKeyState(VK_ESCAPE) & 1 && (GetConsoleWindow() == GetForegroundWindow())) {
+				if ((this)->isPlaying) {
+					cout << "Please exit the map first!" << endl;
+				}
+			}
+				/*(this)->isPlaying = false;
+				Input::sentKeyInput(VK_ESCAPE, true);
+				Input::sentKeyInput(VK_ESCAPE, false);
+				return;*/
+			
+			if (((this)->getCurrentAudioTime() > hitObject.time - beatmap.timeRange300 + Config::CLICKOFFSET)) {
 				break;
 			}
 		}
@@ -300,6 +324,11 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 			setPointsOnCurveThread.join(); // join thread before returning (or else error)
 			return;
 		}
+		else if (GetAsyncKeyState(VK_ESCAPE) & 1 && (GetConsoleWindow() == GetForegroundWindow())) {
+			if ((this)->isPlaying) {
+				cout << "Please exit the map first!" << endl;
+			}
+		}
 	}
 	// refresh the firstHitObject just in case the worker thread didn't change the coordinates (if HR) before it was assigned
 	firstHitObject = beatmap.HitObjects.front();
@@ -323,11 +352,16 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 		POINT nextPoint = (this)->getScaledPoints(nextHitObject.x, nextHitObject.y);
 		// at this point, the cursor is already on the hitObject.
 		// so, to allow for longer range of hit time, wait until the time exceeds the time range of 300 points, then move
-		while ((this)->getCurrentAudioTime() < currentHitObject.time + beatmap.timeRange300 - 3) {
+		while ((this)->getCurrentAudioTime() < currentHitObject.time + beatmap.timeRange300 / 1.5 + Config::CLICKOFFSET) {
 			if ((this)->isPlaying == false) {
 				exitSignal.set_value(); // signal thread to stop
 				setPointsOnCurveThread.join(); // join thread before returning (or else error)
 				return;
+			}
+			else if (GetAsyncKeyState(VK_ESCAPE) & 1 && (GetConsoleWindow() == GetForegroundWindow())) {
+				if ((this)->isPlaying) {
+					cout << "Please exit the map first!" << endl;
+				}
 			}
 		}
 
@@ -451,6 +485,11 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 			setPointsOnCurveThread.join(); // join thread before returning (or else error)
 			return; 
 		}
+		else if (GetAsyncKeyState(VK_ESCAPE) & 1 && (GetConsoleWindow() == GetForegroundWindow())) {
+			if ((this)->isPlaying) {
+				cout << "Please exit the map first!" << endl;
+			}
+		}
 	}
 	// refresh the firstHitObject just in case the worker thread didn't change the coordinates (if HR) before it was assigned
 	firstHitObject = beatmap.HitObjects.front();
@@ -474,22 +513,27 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 
 		// at this point, the cursor is already on the hitObject.
 		// If it is DT or HR DT, timeRange300 is used to offset the rapid speed which causes misses and 100s
+		auto setOffTime = currentHitObject.time + Config::CLICKOFFSET;
 		if (mod == 64 || mod == 80) {
-			while ((this)->getCurrentAudioTime() < currentHitObject.time - beatmap.timeRange300) {
-				if ((this)->isPlaying == false) {
-					exitSignal.set_value();
-					setPointsOnCurveThread.join();
-					return;
-				}
-			}
+			setOffTime -= beatmap.timeRange300;
 		}
-		else {
-			while ((this)->getCurrentAudioTime() < currentHitObject.time) {
-				if ((this)->isPlaying == false) {
-					exitSignal.set_value();
-					setPointsOnCurveThread.join();
-					return;
+		
+		while ((this)->getCurrentAudioTime() < setOffTime) {
+			if ((this)->isPlaying == false) {
+				exitSignal.set_value();
+				setPointsOnCurveThread.join();
+				return;
+			}
+			else if (GetAsyncKeyState(VK_ESCAPE) & 1 && (GetConsoleWindow() == GetForegroundWindow())) {
+				if ((this)->isPlaying) {
+					cout << "Please exit the map first!" << endl;
 				}
+				//exitSignal.set_value(); // signal thread to stop
+				//setPointsOnCurveThread.join(); // join thread before returning (or else error)
+				//(this)->isPlaying = false;
+				//Input::sentKeyInput(VK_ESCAPE, true);
+				//Input::sentKeyInput(VK_ESCAPE, false);
+				//return;
 			}
 		}
 		
@@ -567,7 +611,10 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 			// sleep so that the key press is detected by the game client
 			// becuz if not sleep, pressing and releasing happen almost simultaneously and cannot be detected
 			// should be at least 10 millisecs 
-			Sleep(10); 
+			//Sleep(10); 
+			auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000000;
+			auto t_start = chrono::high_resolution_clock::now();
+			while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < circleSleepTime) {}
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
@@ -632,14 +679,17 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 		}
 		Input::spinnerMove(center, moveDuration);
 	}
-
-	Sleep(10); // account for circle.
+	//Sleep(10); // account for circle.
+	auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000000;
+	auto t_start = chrono::high_resolution_clock::now();
+	while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < circleSleepTime) {}
 	// release both key to prevent unwanted behaviour
 	Input::sentKeyInput(Config::LEFT_KEY, false);
 	Input::sentKeyInput(Config::RIGHT_KEY, false);
 	setPointsOnCurveThread.join(); // dun forget to join the thread b4 exiting
 }
 
+// -----------------------------------------Calculations---------------------------------------------
 // for threading
 // futureObj is simply stop signal from parent thread
 void OsuBot::recalcHitObjectsAndSetPointsOnCurve(Beatmap &beatmap, unsigned int mod, future<void> futureObj) {
@@ -941,6 +991,7 @@ void OsuBot::calcAndSetNewBeatmapAttributes(Beatmap &beatmap, unsigned int mod) 
 	}
 }
 
+// ---------------------------------------Interface--------------------------------------
 void OsuBot::start() {
 	while (true) {
 		system("cls"); // clear the console screen
@@ -998,6 +1049,7 @@ void OsuBot::start() {
 		
 		system("cls");
 		cout << "*If you've chosen any mods, remember to turn on the mods in your osu! client manually!" << endl;
+		cout << "(Press shift + s to configure the settings)" << endl;
 		cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
 		
 		// more comprehensive checking var for unique title
@@ -1040,17 +1092,7 @@ void OsuBot::start() {
 						(this)->calcAndSetNewBeatmapAttributes(b, modChoice);
 						// start the bot
 						cout << "Starting: " << beatmapVec.at(0).nameOfOsuFile << endl;
-						switch (botChoice) {
-						case 1:
-							(this)->modAuto(b, modChoice);
-							break;
-						case 2:
-							(this)->modAutoPilot(b, modChoice);
-							break;
-						case 3:
-							(this)->modRelax(b, modChoice);
-							break;
-						}
+						(this)->startMod(b, botChoice, modChoice);
 						checkIfIsPlaying.join();
 						cout << "Ending: " << beatmapVec.at(0).nameOfOsuFile << endl << endl;
 					}
@@ -1105,17 +1147,7 @@ void OsuBot::start() {
 					if (b.allSet) {
 						(this)->calcAndSetNewBeatmapAttributes(b, modChoice);
 						cout << "Starting: " << Functions::split(b.fullPathBeatmapFileName, '\\').back() << endl;
-						switch (botChoice) {
-						case 1:
-							(this)->modAuto(b, modChoice);
-							break;
-						case 2:
-							(this)->modAutoPilot(b, modChoice);
-							break;
-						case 3:
-							(this)->modRelax(b, modChoice);
-							break;
-						}
+						(this)->startMod(b, botChoice, modChoice);
 						checkIfIsPlaying.join();
 						cout << "Ending: " << Functions::split(b.fullPathBeatmapFileName, '\\').back() << endl << endl;
 					}
@@ -1132,3 +1164,6 @@ void OsuBot::start() {
 
 // TODO2:
 //		then implement if the cursor is within the circle, click early for better for relax mode.
+
+// press shift + s to change setting
+// allow to change setting and reload in real time

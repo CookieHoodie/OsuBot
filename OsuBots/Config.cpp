@@ -6,8 +6,10 @@ namespace Config
 	string OSUROOTPATH = "";
 	char LEFT_KEY = 'z';
 	char RIGHT_KEY = 'x';
+	unsigned int CIRCLESLEEPTIME = 10;
+	int CLICKOFFSET = 0;
 
-	// Derived constants
+	// Derived constants (not in file)
 	string SONGFOLDER = "";
 }
 
@@ -29,6 +31,12 @@ void Config::loadConfigFile(string filename)
 			}
 			else if (constVector.front() == "RIGHT_KEY") {
 				Config::RIGHT_KEY = constVector.back().front();
+			}
+			else if (constVector.front() == "CIRCLESLEEPTIME") {
+				Config::CIRCLESLEEPTIME = stoi(constVector.back());
+			}
+			else if (constVector.front() == "CLICKOFFSET") {
+				Config::CLICKOFFSET = stoi(constVector.back());
 			}
 		}
 		Config::SONGFOLDER = Config::OSUROOTPATH + "Songs\\";
@@ -66,6 +74,8 @@ void Config::loadConfigFile(string filename)
 			configTxtWriter << "OSUROOTPATH=" << osuRootPath << endl;
 			configTxtWriter << "LEFT_KEY=" << leftKey << endl;
 			configTxtWriter << "RIGHT_KEY=" << rightKey << endl;
+			configTxtWriter << "CIRCLESLEEPTIME=" << Config::CIRCLESLEEPTIME << endl;
+			configTxtWriter << "CLICKOFFSET=" << Config::CLICKOFFSET << endl;
 			cout << "If you wanna change the settings, delete the 'config.txt' created in the same directory with this program or manipulate the data inside manually." << endl;
 			configTxtWriter.close();
 

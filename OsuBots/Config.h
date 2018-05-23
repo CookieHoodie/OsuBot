@@ -15,6 +15,8 @@ namespace Config
 	extern char RIGHT_KEY;
 	extern string OSUROOTPATH;
 	extern string SONGFOLDER;
+	extern unsigned int CIRCLESLEEPTIME;
+	extern int CLICKOFFSET;
 
 	void loadConfigFile(string filename);
 }

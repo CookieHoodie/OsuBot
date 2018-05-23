@@ -76,6 +76,8 @@ private:
 	POINT getScaledPoints(int x, int y);
 
 	// Mods
+	// wrapper
+	void startMod(Beatmap beatmap, unsigned int bot, unsigned int mod);
 	void modRelax(Beatmap beatmap, unsigned int mod);
 	void modAutoPilot(Beatmap beatmap, unsigned int mod); 
 	void modAuto(Beatmap beatmap, unsigned int mod);
