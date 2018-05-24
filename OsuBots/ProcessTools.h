@@ -17,6 +17,8 @@ public:
 	static HWND getWindowTitleHandle(LPCSTR windowTitle);
 	static string getWindowTextString(HWND windowHandle);
 	static string promptToChooseFileAndGetPath(LPCWSTR customTitle = L"");
+	static bool saveConsoleBuffer(CONSOLE_SCREEN_BUFFER_INFO &csbi, PCHAR_INFO consoleBuffer);
+	static bool restoreConsoleBuffer(CONSOLE_SCREEN_BUFFER_INFO &csbi, PCHAR_INFO consoleBuffer);
 	//static int readFromMemory(DWORD processID, void* memoryAddress);
 	//static bool readFromMemory(HANDLE hProcess, void* memoryAddress, void* output, int size);
 	//static int writeToMemory(DWORD processID, void* memoryAddress, byte* input, int size);

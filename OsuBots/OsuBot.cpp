@@ -223,11 +223,9 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 					cout << "Please exit the map first!" << endl;
 				}
 			}
-				/*(this)->isPlaying = false;
-				Input::sentKeyInput(VK_ESCAPE, true);
-				Input::sentKeyInput(VK_ESCAPE, false);
-				return;*/
-			
+			else if (GetAsyncKeyState(VK_SHIFT) & GetAsyncKeyState(0x43) & 0x8000 && (GetConsoleWindow() == GetForegroundWindow())) { // shift + c
+				Config::clearAndChangeConfig();
+			}
 			if (((this)->getCurrentAudioTime() > hitObject.time - beatmap.timeRange300 + Config::CLICKOFFSET)) {
 				break;
 			}
@@ -236,13 +234,17 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 		if (hitObject.type == HitObject::TypeE::circle) {
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
-				Sleep(10); 
+				auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000000;
+				auto t_start = chrono::high_resolution_clock::now();
+				while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < circleSleepTime) {}
 				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
 				Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
-				Sleep(10); 
+				auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000000;
+				auto t_start = chrono::high_resolution_clock::now();
+				while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < circleSleepTime) {}
 				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
@@ -329,6 +331,9 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 				cout << "Please exit the map first!" << endl;
 			}
 		}
+		else if (GetAsyncKeyState(VK_SHIFT) & GetAsyncKeyState(0x43) & 0x8000 && (GetConsoleWindow() == GetForegroundWindow())) { // shift + c
+			Config::clearAndChangeConfig();
+		}
 	}
 	// refresh the firstHitObject just in case the worker thread didn't change the coordinates (if HR) before it was assigned
 	firstHitObject = beatmap.HitObjects.front();
@@ -362,6 +367,9 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 				if ((this)->isPlaying) {
 					cout << "Please exit the map first!" << endl;
 				}
+			}
+			else if (GetAsyncKeyState(VK_SHIFT) & GetAsyncKeyState(0x43) & 0x8000 && (GetConsoleWindow() == GetForegroundWindow())) { // shift + c
+				Config::clearAndChangeConfig();
 			}
 		}
 
@@ -476,7 +484,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 	if (mod == 64 || mod == 80) {
 		firstMoveDuration *= 0.67;
 	}
-	// OR condition becuz if the firstObject time is too short, the value in currentAudioTime is very large garbage value
+	// OR condition becuz if the firstObject time is too short, the value in currentAudioTime is very large, unsigned int value
 	while ((this)->getCurrentAudioTime() < firstWaitDuration || (this)->getCurrentAudioTime() > beatmap.HitObjects.back().time) {
 		// while waiting for the time to hit hitObject, constantly check if the map is still being played
 		// if it's not, break out of this function to end the map
@@ -489,6 +497,9 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 			if ((this)->isPlaying) {
 				cout << "Please exit the map first!" << endl;
 			}
+		}
+		else if (GetAsyncKeyState(VK_SHIFT) & GetAsyncKeyState(0x43) & 0x8000 && (GetConsoleWindow() == GetForegroundWindow())) { // shift + c
+			Config::clearAndChangeConfig();
 		}
 	}
 	// refresh the firstHitObject just in case the worker thread didn't change the coordinates (if HR) before it was assigned
@@ -528,12 +539,9 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 				if ((this)->isPlaying) {
 					cout << "Please exit the map first!" << endl;
 				}
-				//exitSignal.set_value(); // signal thread to stop
-				//setPointsOnCurveThread.join(); // join thread before returning (or else error)
-				//(this)->isPlaying = false;
-				//Input::sentKeyInput(VK_ESCAPE, true);
-				//Input::sentKeyInput(VK_ESCAPE, false);
-				//return;
+			}
+			else if (GetAsyncKeyState(VK_SHIFT) & GetAsyncKeyState(0x43) & 0x8000 && (GetConsoleWindow() == GetForegroundWindow())) { // shift + c
+				Config::clearAndChangeConfig();
 			}
 		}
 		
@@ -997,6 +1005,9 @@ void OsuBot::start() {
 		system("cls"); // clear the console screen
 		int botChoice = 0;
 		unsigned int modChoice = 0;
+		// for display purpose
+		string usingBot = "Auto";
+		string usingMod = "Nomod";
 		string input;
 		cout << "1) Auto" << endl;
 		cout << "2) Auto pilot" << endl;
@@ -1013,15 +1024,23 @@ void OsuBot::start() {
 			cin >> input;
 		}
 		botChoice = stoi(input);
+		switch (botChoice) {
+		case 2:
+			usingBot = "Auto pilot";
+		case 3:
+			usingBot = "Relax";
+		}
 		system("cls");
+		cout << "0) Go back" << endl;
 		cout << "1) No mod" << endl;
 		cout << "2) Hardrock" << endl;
 		cout << "3) Double time" << endl;
 		cout << "4) HR DT" << endl;
 		cout << "Please choose a mod: ";
 		cin >> input;
-		while (!(all_of(input.begin(), input.end(), isdigit)) || stoi(input) < 1 || stoi(input) > 4) {
+		while (!(all_of(input.begin(), input.end(), isdigit)) || stoi(input) < 0 || stoi(input) > 4) {
 			cout << "Invalid input. Please enter again." << endl;
+			cout << "0) Go back" << endl;
 			cout << "1) No mod" << endl;
 			cout << "2) Hardrock" << endl;
 			cout << "3) Double time" << endl;
@@ -1033,25 +1052,34 @@ void OsuBot::start() {
 		// well, the mods are supposed to be determined using bitwise operator '|'
 		// but whatever
 		switch (tempModChoice) {
+		case 0:
+			continue;
+			break;
 		//case 1:
 			//modChoice = 0
 			//break;
 		case 2:
 			modChoice = 16;
+			usingMod = "HR";
 			break;
 		case 3:
 			modChoice = 64;
+			usingMod = "DT";
 			break;
 		case 4:
 			modChoice = 80; // 16 + 64
+			usingMod = "HR DT";
 			break;
 		}
-		
 		system("cls");
-		cout << "*If you've chosen any mods, remember to turn on the mods in your osu! client manually!" << endl;
-		cout << "(Press shift + s to configure the settings)" << endl;
-		cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
+		cout << "(Press shift + c to configure the settings)" << endl;
+		cout << "You're using: " << usingBot << " (" << usingMod << ")" << endl;
+		if (usingMod != "Nomod") {
+			cout << "*Please turn on " << usingMod << " in game manually" << endl;
+		}
+		cout << endl; // new line
 		
+		cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
 		// more comprehensive checking var for unique title
 		string lastFullPathAfterSongFolder = "";
 		// less accurate checking var for non-unique title
@@ -1059,10 +1087,14 @@ void OsuBot::start() {
 		vector<Beatmap> lastPlayedBeatmap;
 		while (true) {
 			// Detect ESC key asynchronously to let user go back to menu to choose mod
-			if (GetAsyncKeyState(VK_ESCAPE) && (GetConsoleWindow() == GetForegroundWindow())) {
+			if (GetAsyncKeyState(VK_ESCAPE) & 0x8000 && (GetConsoleWindow() == GetForegroundWindow())) {
 				cout << "Esc detected. Exiting." << endl;
 				Sleep(500);
 				break;
+			}
+			// shift + c
+			else if (GetAsyncKeyState(VK_SHIFT) & GetAsyncKeyState(0x43) & 0x8000 && (GetConsoleWindow() == GetForegroundWindow())) { 
+				Config::clearAndChangeConfig();
 			}
 			// constantly check title to see if any map is played
 			auto currentTitle = ProcessTools::getWindowTextString((this)->windowTitleHandle);
@@ -1157,13 +1189,10 @@ void OsuBot::start() {
 					cout << "Waiting for beatmap... (Press esc to return to menu)" << endl;
 				}
 			}
-			Sleep(200); // Check for title every 0.2 sec
+			Sleep(100); // Check for title every 0.1 sec
 		}
 	}
 }
-
-// TODO2:
-//		then implement if the cursor is within the circle, click early for better for relax mode.
 
 // press shift + s to change setting
 // allow to change setting and reload in real time

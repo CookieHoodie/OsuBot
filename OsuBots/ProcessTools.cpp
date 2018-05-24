@@ -101,6 +101,57 @@ string ProcessTools::promptToChooseFileAndGetPath(LPCWSTR customTitle) {
 	return returnStr;
 }
 
+// save the output on console into buffer
+bool ProcessTools::saveConsoleBuffer(CONSOLE_SCREEN_BUFFER_INFO &csbi, PCHAR_INFO consoleBuffer) {
+	HANDLE hStdout;
+	COORD coordBufCoord;
+
+	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (!GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		return false;
+	}
+	// The top left destination cell of the temporary buffer is 
+	// row 0, col 0. 
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+	// Copy the block from the screen buffer to the temp. buffer. 
+	if (!ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		consoleBuffer,      // buffer to copy into 
+		csbi.dwMaximumWindowSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&csbi.srWindow)) // screen buffer source rectangle 
+	{
+		return false;
+	}
+	return true;
+}
+
+// write data in the buffer to the console output
+bool ProcessTools::restoreConsoleBuffer(CONSOLE_SCREEN_BUFFER_INFO &csbi, PCHAR_INFO consoleBuffer) {
+	HANDLE hStdout;
+	COORD coordBufCoord;
+
+	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	// The top left destination cell of the temporary buffer is 
+	// row 0, col 0. 
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+	// Copy the block from the screen buffer to the temp. buffer. 
+	if (!WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		consoleBuffer,        // buffer to copy from 
+		csbi.dwMaximumWindowSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&csbi.srWindow))  // dest. screen buffer rectangle 
+	{
+		return false;
+	}
+	SetConsoleCursorPosition(hStdout, csbi.dwCursorPosition);
+	return true;
+}
+
 //int ProcessTools::writeToMemory(DWORD processID, void* memoryAddress, byte* input, int size)
 //// write value in input to memoryAddress given
 //// size of input determines how many bytes of data to write to the specific address
