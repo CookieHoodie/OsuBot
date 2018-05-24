@@ -1,4 +1,6 @@
 # New updates
+Now you can change the timing related offset to suit your gameplay in the settings screen.
+
 Stack circles problems are solved, only certain special cases (which are pretty unlikely to cause problem) are not accounted for.
 
 DT and HR DT are now supported!
@@ -16,6 +18,8 @@ Auto, Autopilot, and Relax with Nomod, HR only, DT only, or HR DT
 Auto detection of currently played beatmap
 
 Retry the same map without reloading the map
+
+Custom timing related offsets (can be changed when pausing)
 
 # Code overview
 
@@ -52,16 +56,17 @@ There might be problems if your system is not in English or the path to your osu
 Sometimes, the cursor position does not sync with the osu! client screen for some reasons. If that happens, try to restart the program (and also osu! client if the problem persists).
 If signature scanning take too long to finish (say more than 30s), you might need to restart your osu! client and try again.
 
-# How to use
-1) Download the exe at release page
+# Debug
+If you find timing of the bots are not synced, try to go to settings (shift + c after choosing bot and mods) and change the constants to modify the offsets.
 
-2) Drag it to the folder of your choice
+# How to use
+1) Download the exe at release page. (https://github.com/CookieHoodie/OsuBot/releases)
+
+2) Drag it to the folder of your choice.
 
 3) Start your osu! client and then start the OsuBot.
 
 Extra: If you really decide to use this to cheat, change the Osubot.exe to another name to reduce the chance of getting detected.
-
-And also, you might need to pause the map before it's started to give the bot time to load the beatmap.
 
 # Disclaimer
 I don't use the bot to cheat whatsoever, I just created it for fun and for learning.
@@ -72,5 +77,3 @@ If you got banned from using this, I'm not responsible for that.
 If you find this useful, please support me to help me get a better laptop! It's a pain in the butt to program using this crappy laptop but I can't afford to buy one cuz I'm still a student...
 
 Support me on [![gogetfunding](https://gogetfunding.com/wp-content/themes/ggf/images/logo.png)](https://goget.fund/2KsnB8f)
-
-## Tutorial might be made once this project is done if requested

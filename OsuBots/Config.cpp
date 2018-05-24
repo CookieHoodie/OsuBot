@@ -6,8 +6,10 @@ namespace Config
 	string OSUROOTPATH = "";
 	char LEFT_KEY = 'z';
 	char RIGHT_KEY = 'x';
-	unsigned int CIRCLESLEEPTIME = 10;
 	int CLICKOFFSET = 0;
+	int SLIDERDURATIONOFFSET = 0;
+	// rarely changed
+	unsigned int CIRCLESLEEPTIME = 10;
 
 	// Derived constants (not in file)
 	string SONGFOLDER = "";
@@ -33,12 +35,16 @@ void Config::loadConfigFile(string filename)
 			else if (constVector.front() == "RIGHT_KEY") {
 				Config::RIGHT_KEY = constVector.back().front();
 			}
-			else if (constVector.front() == "CIRCLESLEEPTIME") {
-				Config::CIRCLESLEEPTIME = stoi(constVector.back());
-			}
 			else if (constVector.front() == "CLICKOFFSET") {
 				Config::CLICKOFFSET = stoi(constVector.back());
 			}
+			else if (constVector.front() == "SLIDERDURATIONOFFSET") {
+				Config::SLIDERDURATIONOFFSET = stoi(constVector.back());
+			}
+			else if (constVector.front() == "CIRCLESLEEPTIME") {
+				Config::CIRCLESLEEPTIME = stoi(constVector.back());
+			}
+			
 		}
 		Config::SONGFOLDER = Config::OSUROOTPATH + "Songs\\";
 		Config::FILENAME = filename;
@@ -76,8 +82,10 @@ void Config::loadConfigFile(string filename)
 			configTxtWriter << "OSUROOTPATH=" << osuRootPath << endl;
 			configTxtWriter << "LEFT_KEY=" << leftKey << endl;
 			configTxtWriter << "RIGHT_KEY=" << rightKey << endl;
-			configTxtWriter << "CIRCLESLEEPTIME=" << Config::CIRCLESLEEPTIME << endl;
 			configTxtWriter << "CLICKOFFSET=" << Config::CLICKOFFSET << endl;
+			configTxtWriter << "SLIDERDURATIONOFFSET=" << Config::SLIDERDURATIONOFFSET << endl;
+			configTxtWriter << "CIRCLESLEEPTIME=" << Config::CIRCLESLEEPTIME << endl;
+			
 			cout << "If you wanna change the settings, delete the 'config.txt' created in the same directory with this program or manipulate the data inside manually." << endl;
 			configTxtWriter.close();
 
@@ -110,10 +118,13 @@ void Config::changeConfig() {
 		string input;
 		cout << "(Press y to save the changes, n to discard the changes)" << endl;
 		cout << "Make change to: (current value)" << endl;
+		cout << "0) Reset All" << endl;
 		cout << "1) LEFT_KEY (" << Config::LEFT_KEY << ")" << endl;
 		cout << "2) RIGHT_KEY (" << Config::RIGHT_KEY << ")" << endl;
-		cout << "3) CIRCLESLEEPTIME (" << Config::CIRCLESLEEPTIME << ")" << endl;
-		cout << "4) CLICKOFFSET (" << Config::CLICKOFFSET << ")" << endl;
+		cout << "3) CLICKOFFSET (" << Config::CLICKOFFSET << ")" << endl;
+		cout << "4) SLIDERDURATIONOFFSET (" << Config::SLIDERDURATIONOFFSET << ")" << endl;
+		cout << "5) CIRCLESLEEPTIME (" << Config::CIRCLESLEEPTIME << ")" << endl;
+		
 		cin >> input;
 		// if y or n found, exit the loop
 		if (input.front() == 'y' || input.front() == 'n') {
@@ -122,13 +133,15 @@ void Config::changeConfig() {
 		}
 		// var so that it can break out the outer loop
 		bool loopBreak = false;
-		while (!(all_of(input.begin(), input.end(), isdigit)) || stoi(input) < 1 || stoi(input) > 4) {
+		while (!(all_of(input.begin(), input.end(), isdigit)) || stoi(input) < 0 || stoi(input) > 5) {
 			cout << "Invalid input. Please enter again." << endl;
 			cout << "Make change to: (current value)" << endl;
+			cout << "0) Reset all to default values" << endl;
 			cout << "1) LEFT_KEY (" << Config::LEFT_KEY << ")" << endl;
 			cout << "2) RIGHT_KEY (" << Config::RIGHT_KEY << ")" << endl;
-			cout << "3) CIRCLESLEEPTIME (" << Config::CIRCLESLEEPTIME << ")" << endl;
-			cout << "4) CLICKOFFSET (" << Config::CLICKOFFSET << ")" << endl;
+			cout << "3) CLICKOFFSET (" << Config::CLICKOFFSET << ")" << endl;
+			cout << "4) SLIDERDURATIONOFFSET (" << Config::SLIDERDURATIONOFFSET << ")" << endl;
+			cout << "5) CIRCLESLEEPTIME (" << Config::CIRCLESLEEPTIME << ")" << endl;
 			cin >> input;
 			if (input.front() == 'y' || input.front() == 'n') {
 				discard = input.front() == 'n' ? true : false;
@@ -140,6 +153,20 @@ void Config::changeConfig() {
 		int choice = stoi(input);
 		system("cls");
 		switch (choice) {
+		case 0: {
+			//cout << "Sure you wanna reset all? (y/n)" << endl;
+			//cin >> input;
+			//// if y or n found, exit the loop
+			//while (input.front() != 'y' && input.front() != 'n') {
+			//	cout << "Invalid input. Try again: (y/n)" << endl;
+			//	cin >> input;
+			//}
+			//if (input.front() == 'y') {
+			//	Config::resetConfig();
+			//}
+			Config::resetConfig();
+			break;
+		}
 		case 1:
 		case 2: {
 			char change;
@@ -164,14 +191,18 @@ void Config::changeConfig() {
 			break;
 		}
 		case 3:
-		case 4: {
+		case 4:
+		case 5: {
 			string changeStr;
 			bool isNegative = false;
 			if (choice == 3) {
-				cout << "Enter new CIRCLESLEEPTIME: (recommended +-10 (for Auto only))" << endl;
+				cout << "Enter new CLICKOFFSET: (recommended 0+-30)" << endl;
+			}
+			else if (choice == 4) {
+				cout << "Enter new SLIDERDURATIONOFFSET: (recommended 0+-20)" << endl;
 			}
 			else {
-				cout << "Enter new CLICKOFFSET: (recommended -50 to 50)" << endl;
+				cout << "Enter new CIRCLESLEEPTIME: (recommended 10+ (rarely changed))" << endl;
 			}
 			cin >> changeStr;
 			// user might have input -ve value, which would fail the isdigit check, so check if it's -ve first
@@ -191,10 +222,13 @@ void Config::changeConfig() {
 					changeInt = -changeInt;
 				}
 				if (choice == 3) {
-					Config::CIRCLESLEEPTIME = changeInt;
+					Config::CLICKOFFSET = changeInt;
+				}
+				else if (choice == 4) {
+					Config::SLIDERDURATIONOFFSET = changeInt;
 				}
 				else {
-					Config::CLICKOFFSET = changeInt;
+					Config::CIRCLESLEEPTIME = changeInt;
 				}
 			}
 			break;
@@ -212,8 +246,9 @@ void Config::changeConfig() {
 			configTxtWriter << "OSUROOTPATH=" << Config::OSUROOTPATH << endl;
 			configTxtWriter << "LEFT_KEY=" << Config::LEFT_KEY << endl;
 			configTxtWriter << "RIGHT_KEY=" << Config::RIGHT_KEY << endl;
-			configTxtWriter << "CIRCLESLEEPTIME=" << Config::CIRCLESLEEPTIME << endl;
 			configTxtWriter << "CLICKOFFSET=" << Config::CLICKOFFSET << endl;
+			configTxtWriter << "SLIDERDURATIONOFFSET=" << Config::SLIDERDURATIONOFFSET << endl;
+			configTxtWriter << "CIRCLESLEEPTIME=" << Config::CIRCLESLEEPTIME << endl;
 			configTxtWriter.close();
 		}
 		else {
@@ -224,4 +259,13 @@ void Config::changeConfig() {
 		// reload the constants so that if the changes are discarded, the constants that have been modified are changed back
 		Config::loadConfigFile(Config::FILENAME);
 	}
+}
+
+void Config::resetConfig() {
+	Config::LEFT_KEY = 'z';
+	Config::RIGHT_KEY = 'x';
+	Config::CLICKOFFSET = 0;
+	Config::SLIDERDURATIONOFFSET = 0;
+	// rarely changed
+	Config::CIRCLESLEEPTIME = 10;
 }

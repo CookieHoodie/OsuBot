@@ -385,8 +385,9 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 				// then rewrite currentHitObject to get the calculated points
 				currentHitObject = beatmap.HitObjects.at(i - 1);
 			}
+			currentHitObject.sliderDuration += Config::SLIDERDURATIONOFFSET; // account for user defined offset
 			if (mod == 64 || mod == 80) {
-				currentHitObject.sliderDuration = currentHitObject.sliderDuration / 1.5;
+				currentHitObject.sliderDuration /= 1.5;
 			}
 			// move slider regardless of type and after reaching the slider end, move linearly to next hitObject
 			// the duration of moving linearly is divide by 2 to reduce latency and also improve readability
@@ -440,8 +441,9 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 		}
 	}
 	if (lastHitObject.type == HitObject::TypeE::slider) {
+		lastHitObject.sliderDuration += Config::SLIDERDURATIONOFFSET; // account for user defined offset
 		if (mod == 64 || mod == 80) {
-			lastHitObject.sliderDuration = lastHitObject.sliderDuration / 1.5;
+			lastHitObject.sliderDuration /= 1.5;
 		}
 		Input::sliderMove(lastHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
 	}
@@ -565,8 +567,9 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 				// then rewrite currentHitObject to get the calculated points
 				currentHitObject = beatmap.HitObjects.at(i - 1);
 			}
+			currentHitObject.sliderDuration += Config::SLIDERDURATIONOFFSET; // account for user defined offset
 			if (mod == 64 || mod == 80) {
-				currentHitObject.sliderDuration = currentHitObject.sliderDuration / 1.5;
+				currentHitObject.sliderDuration /= 1.5;
 			}
 			// move slider regardless of type and after reaching the slider end, move linearly to next hitObject
 			// the duration of moving linearly is divide by 2 to reduce latency and also improve readability
@@ -659,20 +662,9 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 	}
 
 	if (lastHitObject.type == HitObject::TypeE::slider) {
-		// it's quite unlikely to have not done calculation by this time, so omit this for program size sake
-		/*if (beatmap.HitObjects.back().sliderPointsAreCalculated == false) {
-			while (true) {
-				if (beatmap.HitObjects.back().sliderPointsAreCalculated) {
-					break;
-				}
-			}
-			lastHitObject = beatmap.HitObjects.back();
-			if (mod == 16) {
-				lastHitObject.y = 384 - lastHitObject.y;
-			}
-		}*/
+		lastHitObject.sliderDuration += Config::SLIDERDURATIONOFFSET; // account for user defined offset
 		if (mod == 64 || mod == 80) {
-			lastHitObject.sliderDuration = lastHitObject.sliderDuration / 1.5;
+			lastHitObject.sliderDuration /= 1.5;
 		}
 		Input::sliderMove(lastHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
 	}
@@ -1027,8 +1019,10 @@ void OsuBot::start() {
 		switch (botChoice) {
 		case 2:
 			usingBot = "Auto pilot";
+			break;
 		case 3:
 			usingBot = "Relax";
+			break;
 		}
 		system("cls");
 		cout << "0) Go back" << endl;
