@@ -229,21 +229,20 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 				break;
 			}
 		}
-		
+		Timer localTimer = Timer();
 		if (hitObject.type == HitObject::TypeE::circle) {
+			auto circleSleepTime = Config::CIRCLESLEEPTIME * Timer::prefix;
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
-				auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000;
-				auto t_start = Input::Time::now();
-				while (Input::TimePast(Input::Time::now() - t_start).count() < circleSleepTime) {}
+				localTimer.start();
+				while (localTimer.getTimePast() < circleSleepTime) {}
 				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
 				Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
-				auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000;
-				auto t_start = Input::Time::now();
-				while (Input::TimePast(Input::Time::now() - t_start).count() < circleSleepTime) {}
+				localTimer.start();
+				while (localTimer.getTimePast() < circleSleepTime) {}
 				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
@@ -252,15 +251,18 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 			if (mod == 64 || mod == 80) {
 				hitObject.sliderDuration = hitObject.sliderDuration / 1.5;
 			}
+			auto sliderSleepTime = hitObject.sliderDuration * Timer::prefix;
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
-				Sleep(hitObject.sliderDuration); 
+				localTimer.start();
+				while (localTimer.getTimePast() < sliderSleepTime) {}
 				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
 				Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
-				Sleep(hitObject.sliderDuration); 
+				localTimer.start();
+				while (localTimer.getTimePast() < sliderSleepTime) {}
 				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
@@ -273,15 +275,18 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 			else {
 				moveDuration = hitObject.spinnerEndTime - hitObject.time;
 			}
+			moveDuration *= Timer::prefix;
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
-				Sleep(moveDuration);
+				localTimer.start();
+				while (localTimer.getTimePast() < moveDuration) {}
 				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
 				Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
-				Sleep(moveDuration);
+				localTimer.start();
+				while (localTimer.getTimePast() < moveDuration) {}
 				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
@@ -521,9 +526,6 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 		HitObject currentHitObject = beatmap.HitObjects.at(i - 1);
 		HitObject nextHitObject = beatmap.HitObjects.at(i);
 		POINT currentPoint = (this)->getScaledPoints(currentHitObject.x, currentHitObject.y);
-		if (currentHitObject.x == 104 && currentHitObject.y == 304) {
-			int h = 0;
-		}
 		POINT nextPoint = (this)->getScaledPoints(nextHitObject.x, nextHitObject.y);
 
 		// at this point, the cursor is already on the hitObject.
@@ -625,9 +627,10 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 			// becuz if not sleep, pressing and releasing happen almost simultaneously and cannot be detected
 			// should be at least 10 millisecs 
 			//Sleep(10); 
-			auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000;
-			auto t_start = Input::Time::now();
-			while (Input::TimePast(Input::Time::now() - t_start).count() < circleSleepTime) {}
+			auto circleSleepTime = Config::CIRCLESLEEPTIME * Timer::prefix;
+			Timer localTimer = Timer();
+			localTimer.start();
+			while (localTimer.getTimePast() < circleSleepTime) {}
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
@@ -682,9 +685,9 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 		Input::spinnerMove(center, moveDuration);
 	}
 	//Sleep(10); // account for circle.
-	auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000;
-	auto t_start = Input::Time::now();
-	while (Input::TimePast(Input::Time::now() - t_start).count() < circleSleepTime) {}
+	auto circleSleepTime = Config::CIRCLESLEEPTIME * Timer::prefix;
+	Timer localTimer = Timer();
+	while (localTimer.getTimePast() < circleSleepTime) {}
 	// release both key to prevent unwanted behaviour
 	Input::sentKeyInput(Config::LEFT_KEY, false);
 	Input::sentKeyInput(Config::RIGHT_KEY, false);

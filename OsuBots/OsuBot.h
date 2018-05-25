@@ -13,6 +13,7 @@
 #include "Input.h"
 #include "OsuDbParser.h"
 #include "Config.h"
+#include "Timer.h"
 
 using namespace std;
 

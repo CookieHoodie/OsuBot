@@ -30,86 +30,92 @@ void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, doubl
 	
 	POINT currentPosition = startScaledPoint;
 	int distanceMoved = 0; // counter
-	long long nanoDuration = duration * 1000;
+	auto scaledDuration = duration * Timer::prefix;
 
 	// to ensure smoothness, decide whether to use x-axis or y-axis base on greater distance
 	bool useX = totalDistanceX > totalDistanceY ? true : false;
 	
 	if (!stationary) { // if currentPoint is right at the nextPoint, do nothing to prevent divide by zero error
 		if (useX && !vertical) {
-			long long nanosecPerX = nanoDuration / totalDistanceX; // duration of one X move (in nanosec for precision)
+			auto scaledDurationPerX = scaledDuration / totalDistanceX; // duration of one X move 
 			bool goingRight = startScaledPoint.x - endScaledPoint.x < 0 ? true : false; // determine direction
 			if (goingRight) {
 				do {
-					auto t_start = Input::Time::now();
+					Timer localTimer = Timer();
+					localTimer.start();
 					int newX = currentPosition.x + 1; // move X by one
 					int newY = gradient * newX + c; // calculation
 					SetCursorPos(newX, newY);
 					currentPosition.x++;
 					distanceMoved++;
 					// wait for timing of next move
-					while (Input::TimePast(Input::Time::now() - t_start).count() < nanosecPerX) {}
+					while (localTimer.getTimePast() < scaledDurationPerX) {}
 				} while (distanceMoved < totalDistanceX); // loop till it reaches the endPoint
 			}
 			else { // going left basically just change + to -
 				do {
-					auto t_start = Input::Time::now();
+					Timer localTimer = Timer();
+					localTimer.start();
 					int newX = currentPosition.x - 1;
 					int newY = gradient * newX + c;
 					SetCursorPos(newX, newY);
 					currentPosition.x--;
 					distanceMoved++;
-					while (Input::TimePast(Input::Time::now() - t_start).count() < nanosecPerX) {}
+					while (localTimer.getTimePast() < scaledDurationPerX) {}
 				} while (distanceMoved < totalDistanceX);
 			}
 		}
 		else if (vertical) { // if vertical, X is always the same. Change Y only
-			long long nanosecPerY = nanoDuration / totalDistanceY;
+			auto scaledDurationPerY = scaledDuration / totalDistanceY;
 			bool goingUp = startScaledPoint.y - endScaledPoint.y < 0 ? true : false;
 			if (goingUp) {
 				do {
-					auto t_start = Input::Time::now();
+					Timer localTimer = Timer();
+					localTimer.start();
 					int newY = currentPosition.y + 1;
 					SetCursorPos(startScaledPoint.x, newY);
 					currentPosition.y++;
 					distanceMoved++;
-					while (Input::TimePast(Input::Time::now() - t_start).count() < nanosecPerY) {}
+					while (localTimer.getTimePast() < scaledDurationPerY) {}
 				} while (distanceMoved < totalDistanceY);
 			}
 			else {
 				do {
-					auto t_start = Input::Time::now();
+					Timer localTimer = Timer();
+					localTimer.start();
 					int newY = currentPosition.y - 1;
 					SetCursorPos(startScaledPoint.x, newY);
 					currentPosition.y--;
 					distanceMoved++;
-					while (Input::TimePast(Input::Time::now() - t_start).count() < nanosecPerY) {}
+					while (localTimer.getTimePast() < scaledDurationPerY) {}
 				} while (distanceMoved < totalDistanceY);
 			}
 		}
 		else { // all the same except instead of using distance, duration, and position of X, use those of Y
-			long long nanosecPerY = nanoDuration / totalDistanceY;
+			auto scaledDurationPerY = scaledDuration / totalDistanceY;
 			bool goingUp = startScaledPoint.y - endScaledPoint.y < 0 ? true : false;
 			if (goingUp) {
 				do {
-					auto t_start = Input::Time::now();
+					Timer localTimer = Timer();
+					localTimer.start();
 					int newY = currentPosition.y + 1;
 					int newX = (newY - c) / gradient; // calculation base on line equation also
 					SetCursorPos(newX, newY);
 					currentPosition.y++;
 					distanceMoved++;
-					while (Input::TimePast(Input::Time::now() - t_start).count() < nanosecPerY) {}
+					while (localTimer.getTimePast() < scaledDurationPerY) {}
 				} while (distanceMoved < totalDistanceY);
 			}
 			else {
 				do {
-					auto t_start = Input::Time::now();
+					Timer localTimer = Timer();
+					localTimer.start();
 					int newY = currentPosition.y - 1;
 					int newX = (newY - c) / gradient;
 					SetCursorPos(newX, newY);
 					currentPosition.y--;
 					distanceMoved++;
-					while (Input::TimePast(Input::Time::now() - t_start).count() < nanosecPerY) {}
+					while (localTimer.getTimePast() < scaledDurationPerY) {}
 				} while (distanceMoved < totalDistanceY);
 			}
 		}
@@ -120,7 +126,8 @@ void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, doubl
 }
 
 POINT Input::spinnerMove(POINT scaledCenter, double duration) {
-	auto globalStartTime = Input::Time::now();
+	Timer globalTimer = Timer();
+	globalTimer.start();
 	const int radius = 70; // fixed radius
 	const int RPM = 400; // fixed RPM. This only gives like 350 RPM, depending on the speed of your computer
 	const double PI = 4 * atan(1);
@@ -131,14 +138,14 @@ POINT Input::spinnerMove(POINT scaledCenter, double duration) {
 	
 	// calculations for getting constant spinning speed
 	double numberOfPointsInOneRound = 2 * PI / angleIncrement;
-	double TotalNumberOfRoundsNeeded = (RPM / 60) * ((double)duration / 1000);
+	double TotalNumberOfRoundsNeeded = (RPM / 60) * (duration / 1000);
 	double totalNumberOfPoints = TotalNumberOfRoundsNeeded * numberOfPointsInOneRound;
-	long long nanoDuration = duration * 1000;
-    long long durationPerPoint = nanoDuration / totalNumberOfPoints;
+	auto scaledDuration = duration * Timer::prefix;
+    auto scaledDurationPerPoint = scaledDuration / totalNumberOfPoints;
 	
-	for (int i = 0; i < totalNumberOfPoints && 
-		Input::TimePast(Input::Time::now() - globalStartTime).count() <  nanoDuration; i++) {
-		auto t_start = Input::Time::now();
+	for (int i = 0; i < totalNumberOfPoints && globalTimer.getTimePast() < scaledDuration; i++) {
+		Timer localTimer = Timer();
+		localTimer.start();
 		angle += angleIncrement; 
 
 		x = cos(angle) * radius;
@@ -147,7 +154,7 @@ POINT Input::spinnerMove(POINT scaledCenter, double duration) {
 		x += scaledCenter.x;
 		y += scaledCenter.y;
 		SetCursorPos(x, y);
-		while (Input::TimePast(Input::Time::now() - t_start).count() < durationPerPoint) {}
+		while (localTimer.getTimePast() < scaledDurationPerPoint) {}
 	} 
 	POINT scaledEndPoint;
 	scaledEndPoint.x = x;
@@ -156,8 +163,9 @@ POINT Input::spinnerMove(POINT scaledCenter, double duration) {
 }
 
 POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, float pointsMultiplierY, POINT cursorStartPoints) {
-	auto globalStartTime = Input::Time::now();
-	long long nanoDuration = currentHitObject.sliderDuration * 1000; 
+	Timer globalTimer = Timer();
+	globalTimer.start();
+	auto scaledDuration = currentHitObject.sliderDuration * Timer::prefix; 
 	bool reverse = false;
 	FPointS unscaledEndPoint;
 	// if 'L' type, pointsOnCurve is not set, so use circleLinearMove instead
@@ -188,30 +196,30 @@ POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, flo
 		}
 	}
 	else {
-		long long nanoSecPerDistance = (nanoDuration) / (currentHitObject.pointsOnCurve.size() * currentHitObject.repeat);
+		auto scaledDurationPerDistance = (scaledDuration) / (currentHitObject.pointsOnCurve.size() * currentHitObject.repeat);
 		for (int i = 0; i < currentHitObject.repeat; i++) {
 			if (!reverse) {
-				for (int j = 0; j < currentHitObject.pointsOnCurve.size()
-					&& Input::TimePast(Input::Time::now() - globalStartTime).count() <  nanoDuration; j++) {
-					auto t_start = Input::Time::now();
+				for (int j = 0; j < currentHitObject.pointsOnCurve.size() && globalTimer.getTimePast() <  scaledDuration; j++) {
+					Timer localTimer = Timer();
+					localTimer.start();
 					FPointS point = currentHitObject.pointsOnCurve.at(j);
 					int scaledX = point.x * pointsMultiplierX + cursorStartPoints.x;
 					int scaledY = point.y * pointsMultiplierY + cursorStartPoints.y;
 					SetCursorPos(scaledX, scaledY);
-					while (Input::TimePast(Input::Time::now() - t_start).count() < nanoSecPerDistance) {}
+					while (localTimer.getTimePast() < scaledDurationPerDistance) {}
 				}
 				reverse = true;
 				unscaledEndPoint = currentHitObject.pointsOnCurve.back();
 			}
 			else {
-				for (int j = currentHitObject.pointsOnCurve.size(); j-- > 0
-					&& Input::TimePast(Input::Time::now() - globalStartTime).count() <  nanoDuration;) {
-					auto t_start = Input::Time::now();
+				for (int j = currentHitObject.pointsOnCurve.size(); j-- > 0 && globalTimer.getTimePast() <  scaledDuration;) {
+					Timer localTimer = Timer();
+					localTimer.start();
 					FPointS currentPoint = currentHitObject.pointsOnCurve.at(j);
 					int scaledX = currentPoint.x * pointsMultiplierX + cursorStartPoints.x;
 					int scaledY = currentPoint.y * pointsMultiplierY + cursorStartPoints.y;
 					SetCursorPos(scaledX, scaledY);
-					while (Input::TimePast(Input::Time::now() - t_start).count() < nanoSecPerDistance) {}
+					while (localTimer.getTimePast() < scaledDurationPerDistance) {}
 				}
 				reverse = false;
 				unscaledEndPoint = currentHitObject.pointsOnCurve.front();

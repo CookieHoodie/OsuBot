@@ -2,12 +2,12 @@
 
 #include <windows.h>
 #include <math.h> 
-#include <chrono>
 #include <iostream>
 #include <vector>
 #include <algorithm>
 
 #include "HitObject.h"
+#include "Timer.h"
 
 using namespace std;
 
@@ -19,8 +19,4 @@ public:
 	static void circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, double duration);
 	static POINT spinnerMove(POINT center, double duration);
 	static POINT sliderMove(HitObject currentHitObject, float pointsMultiplierX, float pointsMultiplierY, POINT cursorStartPoints);
-
-	// typedef
-	typedef std::chrono::steady_clock Time;
-	typedef std::chrono::duration<double, micro> TimePast;
 };

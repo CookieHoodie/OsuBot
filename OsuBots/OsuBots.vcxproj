@@ -156,6 +156,7 @@
     <ClInclude Include="OsuDbParser.h" />
     <ClInclude Include="ProcessTools.h" />
     <ClInclude Include="SigScanner.h" />
+    <ClInclude Include="Timer.h" />
     <ClInclude Include="TimingPoint.h" />
   </ItemGroup>
   <ItemGroup>
@@ -169,6 +170,7 @@
     <ClCompile Include="OsuDbParser.cpp" />
     <ClCompile Include="ProcessTools.cpp" />
     <ClCompile Include="SigScanner.cpp" />
+    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="TimingPoint.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
