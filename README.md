@@ -6,18 +6,16 @@ Stack circles problems are solved, only certain special cases (which are pretty 
 DT and HR DT are now supported!
 
 # OsuBot
-A bot which, for now, does auto, relax, and autopilot mod in osu!. So far this has not been tested in multiplayer mode.
+A bot which, for now, does auto, relax, and autopilot mod in osu!. 
 
 Most of the codes come with comments, but feel free to ask me if you have any question regarding the codes!
 
-#### **This can only be run on windows platform, and is not yet tested on different machines 
+#### **This can only be run on windows platform, and is not supposed to be used in multiplayer. Restart is required if new beatmap is downloaded. 
 
 # Features
 Auto, Autopilot, and Relax with Nomod, HR only, DT only, or HR DT
 
 Auto detection of currently played beatmap
-
-Retry the same map without reloading the map
 
 Custom timing related offsets (can be changed when pausing)
 
@@ -66,12 +64,14 @@ If you find timing of the bots are not synced, try to go to settings (shift + c 
 
 3) Start your osu! client and then start the OsuBot.
 
+4) If there's error showing "[NAME].dll is missing", go https://www.microsoft.com/en-my/download/details.aspx?id=48145 and download the x86 version.
+
 Extra: If you really decide to use this to cheat, change the Osubot.exe to another name to reduce the chance of getting detected.
 
 # Disclaimer
 I don't use the bot to cheat whatsoever, I just created it for fun and for learning.
 
-If you got banned from using this, I'm not responsible for that.
+I'm not responsible for any ban for using this.
 
 # Support
 If you find this useful, please support me to help me get a better laptop! It's a pain in the butt to program using this crappy laptop but I can't afford to buy one cuz I'm still a student...

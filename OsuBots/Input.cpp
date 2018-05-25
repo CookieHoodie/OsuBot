@@ -41,25 +41,25 @@ void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, doubl
 			bool goingRight = startScaledPoint.x - endScaledPoint.x < 0 ? true : false; // determine direction
 			if (goingRight) {
 				do {
-					auto t_start = chrono::high_resolution_clock::now();
+					auto t_start = Input::Time::now();
 					int newX = currentPosition.x + 1; // move X by one
 					int newY = gradient * newX + c; // calculation
 					SetCursorPos(newX, newY);
 					currentPosition.x++;
 					distanceMoved++;
 					// wait for timing of next move
-					while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < nanosecPerX) {}
+					while (Input::TimePast(Input::Time::now() - t_start).count() < nanosecPerX) {}
 				} while (distanceMoved < totalDistanceX); // loop till it reaches the endPoint
 			}
 			else { // going left basically just change + to -
 				do {
-					auto t_start = chrono::high_resolution_clock::now();
+					auto t_start = Input::Time::now();
 					int newX = currentPosition.x - 1;
 					int newY = gradient * newX + c;
 					SetCursorPos(newX, newY);
 					currentPosition.x--;
 					distanceMoved++;
-					while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < nanosecPerX) {}
+					while (Input::TimePast(Input::Time::now() - t_start).count() < nanosecPerX) {}
 				} while (distanceMoved < totalDistanceX);
 			}
 		}
@@ -68,22 +68,22 @@ void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, doubl
 			bool goingUp = startScaledPoint.y - endScaledPoint.y < 0 ? true : false;
 			if (goingUp) {
 				do {
-					auto t_start = chrono::high_resolution_clock::now();
+					auto t_start = Input::Time::now();
 					int newY = currentPosition.y + 1;
 					SetCursorPos(startScaledPoint.x, newY);
 					currentPosition.y++;
 					distanceMoved++;
-					while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < nanosecPerY) {}
+					while (Input::TimePast(Input::Time::now() - t_start).count() < nanosecPerY) {}
 				} while (distanceMoved < totalDistanceY);
 			}
 			else {
 				do {
-					auto t_start = chrono::high_resolution_clock::now();
+					auto t_start = Input::Time::now();
 					int newY = currentPosition.y - 1;
 					SetCursorPos(startScaledPoint.x, newY);
 					currentPosition.y--;
 					distanceMoved++;
-					while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < nanosecPerY) {}
+					while (Input::TimePast(Input::Time::now() - t_start).count() < nanosecPerY) {}
 				} while (distanceMoved < totalDistanceY);
 			}
 		}
@@ -92,24 +92,24 @@ void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, doubl
 			bool goingUp = startScaledPoint.y - endScaledPoint.y < 0 ? true : false;
 			if (goingUp) {
 				do {
-					auto t_start = chrono::high_resolution_clock::now();
+					auto t_start = Input::Time::now();
 					int newY = currentPosition.y + 1;
 					int newX = (newY - c) / gradient; // calculation base on line equation also
 					SetCursorPos(newX, newY);
 					currentPosition.y++;
 					distanceMoved++;
-					while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < nanosecPerY) {}
+					while (Input::TimePast(Input::Time::now() - t_start).count() < nanosecPerY) {}
 				} while (distanceMoved < totalDistanceY);
 			}
 			else {
 				do {
-					auto t_start = chrono::high_resolution_clock::now();
+					auto t_start = Input::Time::now();
 					int newY = currentPosition.y - 1;
 					int newX = (newY - c) / gradient;
 					SetCursorPos(newX, newY);
 					currentPosition.y--;
 					distanceMoved++;
-					while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < nanosecPerY) {}
+					while (Input::TimePast(Input::Time::now() - t_start).count() < nanosecPerY) {}
 				} while (distanceMoved < totalDistanceY);
 			}
 		}
@@ -120,7 +120,7 @@ void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, doubl
 }
 
 POINT Input::spinnerMove(POINT scaledCenter, double duration) {
-	auto globalStartTime = chrono::high_resolution_clock::now();
+	auto globalStartTime = Input::Time::now();
 	const int radius = 70; // fixed radius
 	const int RPM = 400; // fixed RPM. This only gives like 350 RPM, depending on the speed of your computer
 	const double PI = 4 * atan(1);
@@ -137,8 +137,8 @@ POINT Input::spinnerMove(POINT scaledCenter, double duration) {
     long long durationPerPoint = nanoDuration / totalNumberOfPoints;
 	
 	for (int i = 0; i < totalNumberOfPoints && 
-		chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration; i++) {
-		auto t_start = chrono::high_resolution_clock::now();
+		Input::TimePast(Input::Time::now() - globalStartTime).count() <  nanoDuration; i++) {
+		auto t_start = Input::Time::now();
 		angle += angleIncrement; 
 
 		x = cos(angle) * radius;
@@ -147,7 +147,7 @@ POINT Input::spinnerMove(POINT scaledCenter, double duration) {
 		x += scaledCenter.x;
 		y += scaledCenter.y;
 		SetCursorPos(x, y);
-		while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < durationPerPoint) {}
+		while (Input::TimePast(Input::Time::now() - t_start).count() < durationPerPoint) {}
 	} 
 	POINT scaledEndPoint;
 	scaledEndPoint.x = x;
@@ -156,7 +156,7 @@ POINT Input::spinnerMove(POINT scaledCenter, double duration) {
 }
 
 POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, float pointsMultiplierY, POINT cursorStartPoints) {
-	auto globalStartTime = chrono::high_resolution_clock::now();
+	auto globalStartTime = Input::Time::now();
 	long long nanoDuration = currentHitObject.sliderDuration * 1000000; 
 	bool reverse = false;
 	FPointS unscaledEndPoint;
@@ -192,30 +192,26 @@ POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, flo
 		for (int i = 0; i < currentHitObject.repeat; i++) {
 			if (!reverse) {
 				for (int j = 0; j < currentHitObject.pointsOnCurve.size()
-					&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration; j++) {
-					auto t_start = chrono::high_resolution_clock::now();
+					&& Input::TimePast(Input::Time::now() - globalStartTime).count() <  nanoDuration; j++) {
+					auto t_start = Input::Time::now();
 					FPointS point = currentHitObject.pointsOnCurve.at(j);
 					int scaledX = point.x * pointsMultiplierX + cursorStartPoints.x;
 					int scaledY = point.y * pointsMultiplierY + cursorStartPoints.y;
 					SetCursorPos(scaledX, scaledY);
-					while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < nanoSecPerDistance
-						&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration) {
-					}
+					while (Input::TimePast(Input::Time::now() - t_start).count() < nanoSecPerDistance) {}
 				}
 				reverse = true;
 				unscaledEndPoint = currentHitObject.pointsOnCurve.back();
 			}
 			else {
 				for (int j = currentHitObject.pointsOnCurve.size(); j-- > 0
-					&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration;) {
-					auto t_start = chrono::high_resolution_clock::now();
+					&& Input::TimePast(Input::Time::now() - globalStartTime).count() <  nanoDuration;) {
+					auto t_start = Input::Time::now();
 					FPointS currentPoint = currentHitObject.pointsOnCurve.at(j);
 					int scaledX = currentPoint.x * pointsMultiplierX + cursorStartPoints.x;
 					int scaledY = currentPoint.y * pointsMultiplierY + cursorStartPoints.y;
 					SetCursorPos(scaledX, scaledY);
-					while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < nanoSecPerDistance
-						&& chrono::duration<double, nano>(chrono::high_resolution_clock::now() - globalStartTime).count() <  nanoDuration) {
-					}
+					while (Input::TimePast(Input::Time::now() - t_start).count() < nanoSecPerDistance) {}
 				}
 				reverse = false;
 				unscaledEndPoint = currentHitObject.pointsOnCurve.front();

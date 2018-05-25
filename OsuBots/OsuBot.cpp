@@ -12,7 +12,6 @@ const int OsuBot::PAUSE_SIGNAL_SIG_OFFSET = -5;
 // -----------------------------------Constructor & Destructor---------------------------------------
 OsuBot::OsuBot(wchar_t* processName)
 {
-	auto t_start = chrono::high_resolution_clock::now();
 	cout << "-----------------Initializing-----------------" << endl;
 	cout << "Getting processID..." << endl;
 	(this)->processID = ProcessTools::getProcessID(processName);
@@ -42,7 +41,7 @@ OsuBot::OsuBot(wchar_t* processName)
 		(this)->pauseSignalAddress = (this)->currentAudioTimeAddress + 0x24; // 0x24 is the offset to the pauseSignalAddress
 		cout << "Waiting osuDbThread to join..." << endl;
 		osuDbThread.join();
-		cout << "-----------------Initialization done!-----------------"  << "Time taken: " << roundf(chrono::duration<float>(chrono::high_resolution_clock::now() - t_start).count() * 100) / 100 << "s" <<endl << endl;
+		cout << "-----------------Initialization done!-----------------"  << endl;
 	}
 	else {
 		throw OsuBotException("Failed to get processID. Make sure osu! is running!");
@@ -230,21 +229,21 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 				break;
 			}
 		}
-
+		
 		if (hitObject.type == HitObject::TypeE::circle) {
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
 				auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000000;
-				auto t_start = chrono::high_resolution_clock::now();
-				while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < circleSleepTime) {}
+				auto t_start = Input::Time::now();
+				while (Input::TimePast(Input::Time::now() - t_start).count() < circleSleepTime) {}
 				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
 			}
 			else {
 				Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
 				auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000000;
-				auto t_start = chrono::high_resolution_clock::now();
-				while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < circleSleepTime) {}
+				auto t_start = Input::Time::now();
+				while (Input::TimePast(Input::Time::now() - t_start).count() < circleSleepTime) {}
 				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
 				leftKeysTurn = true;
 			}
@@ -522,6 +521,9 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 		HitObject currentHitObject = beatmap.HitObjects.at(i - 1);
 		HitObject nextHitObject = beatmap.HitObjects.at(i);
 		POINT currentPoint = (this)->getScaledPoints(currentHitObject.x, currentHitObject.y);
+		if (currentHitObject.x == 104 && currentHitObject.y == 304) {
+			int h = 0;
+		}
 		POINT nextPoint = (this)->getScaledPoints(nextHitObject.x, nextHitObject.y);
 
 		// at this point, the cursor is already on the hitObject.
@@ -624,8 +626,8 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 			// should be at least 10 millisecs 
 			//Sleep(10); 
 			auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000000;
-			auto t_start = chrono::high_resolution_clock::now();
-			while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < circleSleepTime) {}
+			auto t_start = Input::Time::now();
+			while (Input::TimePast(Input::Time::now() - t_start).count() < circleSleepTime) {}
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
 				leftKeysTurn = false;
@@ -681,8 +683,8 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 	}
 	//Sleep(10); // account for circle.
 	auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000000;
-	auto t_start = chrono::high_resolution_clock::now();
-	while (chrono::duration<double, nano>(chrono::high_resolution_clock::now() - t_start).count() < circleSleepTime) {}
+	auto t_start = Input::Time::now();
+	while (Input::TimePast(Input::Time::now() - t_start).count() < circleSleepTime) {}
 	// release both key to prevent unwanted behaviour
 	Input::sentKeyInput(Config::LEFT_KEY, false);
 	Input::sentKeyInput(Config::RIGHT_KEY, false);
