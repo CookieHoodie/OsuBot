@@ -30,7 +30,7 @@ void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, doubl
 	
 	POINT currentPosition = startScaledPoint;
 	int distanceMoved = 0; // counter
-	long long nanoDuration = duration * 1000000;
+	long long nanoDuration = duration * 1000;
 
 	// to ensure smoothness, decide whether to use x-axis or y-axis base on greater distance
 	bool useX = totalDistanceX > totalDistanceY ? true : false;
@@ -133,7 +133,7 @@ POINT Input::spinnerMove(POINT scaledCenter, double duration) {
 	double numberOfPointsInOneRound = 2 * PI / angleIncrement;
 	double TotalNumberOfRoundsNeeded = (RPM / 60) * ((double)duration / 1000);
 	double totalNumberOfPoints = TotalNumberOfRoundsNeeded * numberOfPointsInOneRound;
-	long long nanoDuration = duration * 1000000;
+	long long nanoDuration = duration * 1000;
     long long durationPerPoint = nanoDuration / totalNumberOfPoints;
 	
 	for (int i = 0; i < totalNumberOfPoints && 
@@ -157,7 +157,7 @@ POINT Input::spinnerMove(POINT scaledCenter, double duration) {
 
 POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, float pointsMultiplierY, POINT cursorStartPoints) {
 	auto globalStartTime = Input::Time::now();
-	long long nanoDuration = currentHitObject.sliderDuration * 1000000; 
+	long long nanoDuration = currentHitObject.sliderDuration * 1000; 
 	bool reverse = false;
 	FPointS unscaledEndPoint;
 	// if 'L' type, pointsOnCurve is not set, so use circleLinearMove instead

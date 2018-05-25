@@ -233,7 +233,7 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 		if (hitObject.type == HitObject::TypeE::circle) {
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
-				auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000000;
+				auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000;
 				auto t_start = Input::Time::now();
 				while (Input::TimePast(Input::Time::now() - t_start).count() < circleSleepTime) {}
 				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
@@ -241,7 +241,7 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 			}
 			else {
 				Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
-				auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000000;
+				auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000;
 				auto t_start = Input::Time::now();
 				while (Input::TimePast(Input::Time::now() - t_start).count() < circleSleepTime) {}
 				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
@@ -625,7 +625,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 			// becuz if not sleep, pressing and releasing happen almost simultaneously and cannot be detected
 			// should be at least 10 millisecs 
 			//Sleep(10); 
-			auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000000;
+			auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000;
 			auto t_start = Input::Time::now();
 			while (Input::TimePast(Input::Time::now() - t_start).count() < circleSleepTime) {}
 			if (leftKeysTurn) {
@@ -682,7 +682,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 		Input::spinnerMove(center, moveDuration);
 	}
 	//Sleep(10); // account for circle.
-	auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000000;
+	auto circleSleepTime = Config::CIRCLESLEEPTIME * 1000;
 	auto t_start = Input::Time::now();
 	while (Input::TimePast(Input::Time::now() - t_start).count() < circleSleepTime) {}
 	// release both key to prevent unwanted behaviour

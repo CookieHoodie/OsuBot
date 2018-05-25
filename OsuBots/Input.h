@@ -22,5 +22,5 @@ public:
 
 	// typedef
 	typedef std::chrono::steady_clock Time;
-	typedef std::chrono::duration<double, nano> TimePast;
+	typedef std::chrono::duration<double, micro> TimePast;
 };
