@@ -248,6 +248,7 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 			}
 		}
 		else if (hitObject.type == HitObject::TypeE::slider) {
+			hitObject.sliderDuration += Config::SLIDERDURATIONOFFSET;
 			if (mod == 64 || mod == 80) {
 				hitObject.sliderDuration = hitObject.sliderDuration / 1.5;
 			}

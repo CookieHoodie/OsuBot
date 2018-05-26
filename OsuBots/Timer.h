@@ -27,4 +27,3 @@ public:
 	void start();
 	DurationRepT getTimePast();
 };
-

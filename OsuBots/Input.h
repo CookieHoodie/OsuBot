@@ -9,6 +9,8 @@
 #include "HitObject.h"
 #include "Timer.h"
 
+#include <iostream>
+
 using namespace std;
 
 class Input

@@ -13,115 +13,142 @@ void Input::sentKeyInput(char key, bool pressed) {
 	SendInput(1, &key_press, sizeof INPUT);
 }
 
+//void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, double duration) {
+//	Timer benchmark = Timer();
+//	benchmark.start();
+//	int totalDistanceX = abs(endScaledPoint.x - startScaledPoint.x);
+//	int totalDistanceY = abs(endScaledPoint.y - startScaledPoint.y);
+//	// account for divide by zero error
+//	bool stationary = totalDistanceX == 0 && totalDistanceY == 0 ? true : false;
+//	bool vertical = totalDistanceX == 0 ? true : false;
+//
+//	// straight line equation variables
+//	float gradient = NAN; 
+//	float c = NAN;
+//	if (!vertical && !stationary) {
+//		gradient = (float)(endScaledPoint.y - startScaledPoint.y) / (float)(endScaledPoint.x - startScaledPoint.x);
+//		c = startScaledPoint.y - (startScaledPoint.x * gradient);
+//	}
+//	
+//	POINT currentPosition = startScaledPoint;
+//	int distanceMoved = 0; // counter
+//	auto scaledDuration = duration * Timer::prefix;
+//
+//	// to ensure smoothness, decide whether to use x-axis or y-axis base on greater distance
+//	bool useX = totalDistanceX > totalDistanceY ? true : false;
+//	
+//	if (!stationary) { // if currentPoint is right at the nextPoint, do nothing to prevent divide by zero error
+//		if (useX && !vertical) {
+//			auto scaledDurationPerX = scaledDuration / totalDistanceX; // duration of one X move 
+//			bool goingRight = startScaledPoint.x - endScaledPoint.x < 0 ? true : false; // determine direction
+//			if (goingRight) {
+//				do {
+//					Timer localTimer = Timer();
+//					localTimer.start();
+//					int newX = currentPosition.x + 1; // move X by one
+//					int newY = gradient * newX + c; // calculation
+//					SetCursorPos(newX, newY);
+//					currentPosition.x++;
+//					distanceMoved++;
+//					// wait for timing of next move
+//					while (localTimer.getTimePast() < scaledDurationPerX) {}
+//				} while (distanceMoved < totalDistanceX); // loop till it reaches the endPoint
+//			}
+//			else { // going left basically just change + to -
+//				do {
+//					Timer localTimer = Timer();
+//					localTimer.start();
+//					int newX = currentPosition.x - 1;
+//					int newY = gradient * newX + c;
+//					SetCursorPos(newX, newY);
+//					currentPosition.x--;
+//					distanceMoved++;
+//					while (localTimer.getTimePast() < scaledDurationPerX) {}
+//				} while (distanceMoved < totalDistanceX);
+//			}
+//		}
+//		else if (vertical) { // if vertical, X is always the same. Change Y only
+//			auto scaledDurationPerY = scaledDuration / totalDistanceY;
+//			bool goingUp = startScaledPoint.y - endScaledPoint.y < 0 ? true : false;
+//			if (goingUp) {
+//				do {
+//					Timer localTimer = Timer();
+//					localTimer.start();
+//					int newY = currentPosition.y + 1;
+//					SetCursorPos(startScaledPoint.x, newY);
+//					currentPosition.y++;
+//					distanceMoved++;
+//					while (localTimer.getTimePast() < scaledDurationPerY) {}
+//				} while (distanceMoved < totalDistanceY);
+//			}
+//			else {
+//				do {
+//					Timer localTimer = Timer();
+//					localTimer.start();
+//					int newY = currentPosition.y - 1;
+//					SetCursorPos(startScaledPoint.x, newY);
+//					currentPosition.y--;
+//					distanceMoved++;
+//					while (localTimer.getTimePast() < scaledDurationPerY) {}
+//				} while (distanceMoved < totalDistanceY);
+//			}
+//		}
+//		else { // all the same except instead of using distance, duration, and position of X, use those of Y
+//			auto scaledDurationPerY = scaledDuration / totalDistanceY;
+//			bool goingUp = startScaledPoint.y - endScaledPoint.y < 0 ? true : false;
+//			if (goingUp) {
+//				do {
+//					Timer localTimer = Timer();
+//					localTimer.start();
+//					int newY = currentPosition.y + 1;
+//					int newX = (newY - c) / gradient; // calculation base on line equation also
+//					SetCursorPos(newX, newY);
+//					currentPosition.y++;
+//					distanceMoved++;
+//					while (localTimer.getTimePast() < scaledDurationPerY) {}
+//				} while (distanceMoved < totalDistanceY);
+//			}
+//			else {
+//				do {
+//					Timer localTimer = Timer();
+//					localTimer.start();
+//					int newY = currentPosition.y - 1;
+//					int newX = (newY - c) / gradient;
+//					SetCursorPos(newX, newY);
+//					currentPosition.y--;
+//					distanceMoved++;
+//					while (localTimer.getTimePast() < scaledDurationPerY) {}
+//				} while (distanceMoved < totalDistanceY);
+//			}
+//		}
+//	}
+//	else {
+//		SetCursorPos(endScaledPoint.x, endScaledPoint.y);
+//	}
+//	cout << "C: " << duration << " -- " << benchmark.getTimePast() / Timer::prefix << endl;
+//}
+
 void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, double duration) {
-	int totalDistanceX = abs(endScaledPoint.x - startScaledPoint.x);
-	int totalDistanceY = abs(endScaledPoint.y - startScaledPoint.y);
-	// account for divide by zero error
-	bool stationary = totalDistanceX == 0 && totalDistanceY == 0 ? true : false;
-	bool vertical = totalDistanceX == 0 ? true : false;
-
-	// straight line equation variables
-	float gradient = NAN; 
-	float c = NAN;
-	if (!vertical && !stationary) {
-		gradient = (float)(endScaledPoint.y - startScaledPoint.y) / (float)(endScaledPoint.x - startScaledPoint.x);
-		c = startScaledPoint.y - (startScaledPoint.x * gradient);
-	}
-	
-	POINT currentPosition = startScaledPoint;
-	int distanceMoved = 0; // counter
-	auto scaledDuration = duration * Timer::prefix;
-
-	// to ensure smoothness, decide whether to use x-axis or y-axis base on greater distance
-	bool useX = totalDistanceX > totalDistanceY ? true : false;
-	
-	if (!stationary) { // if currentPoint is right at the nextPoint, do nothing to prevent divide by zero error
-		if (useX && !vertical) {
-			auto scaledDurationPerX = scaledDuration / totalDistanceX; // duration of one X move 
-			bool goingRight = startScaledPoint.x - endScaledPoint.x < 0 ? true : false; // determine direction
-			if (goingRight) {
-				do {
-					Timer localTimer = Timer();
-					localTimer.start();
-					int newX = currentPosition.x + 1; // move X by one
-					int newY = gradient * newX + c; // calculation
-					SetCursorPos(newX, newY);
-					currentPosition.x++;
-					distanceMoved++;
-					// wait for timing of next move
-					while (localTimer.getTimePast() < scaledDurationPerX) {}
-				} while (distanceMoved < totalDistanceX); // loop till it reaches the endPoint
-			}
-			else { // going left basically just change + to -
-				do {
-					Timer localTimer = Timer();
-					localTimer.start();
-					int newX = currentPosition.x - 1;
-					int newY = gradient * newX + c;
-					SetCursorPos(newX, newY);
-					currentPosition.x--;
-					distanceMoved++;
-					while (localTimer.getTimePast() < scaledDurationPerX) {}
-				} while (distanceMoved < totalDistanceX);
-			}
-		}
-		else if (vertical) { // if vertical, X is always the same. Change Y only
-			auto scaledDurationPerY = scaledDuration / totalDistanceY;
-			bool goingUp = startScaledPoint.y - endScaledPoint.y < 0 ? true : false;
-			if (goingUp) {
-				do {
-					Timer localTimer = Timer();
-					localTimer.start();
-					int newY = currentPosition.y + 1;
-					SetCursorPos(startScaledPoint.x, newY);
-					currentPosition.y++;
-					distanceMoved++;
-					while (localTimer.getTimePast() < scaledDurationPerY) {}
-				} while (distanceMoved < totalDistanceY);
-			}
-			else {
-				do {
-					Timer localTimer = Timer();
-					localTimer.start();
-					int newY = currentPosition.y - 1;
-					SetCursorPos(startScaledPoint.x, newY);
-					currentPosition.y--;
-					distanceMoved++;
-					while (localTimer.getTimePast() < scaledDurationPerY) {}
-				} while (distanceMoved < totalDistanceY);
-			}
-		}
-		else { // all the same except instead of using distance, duration, and position of X, use those of Y
-			auto scaledDurationPerY = scaledDuration / totalDistanceY;
-			bool goingUp = startScaledPoint.y - endScaledPoint.y < 0 ? true : false;
-			if (goingUp) {
-				do {
-					Timer localTimer = Timer();
-					localTimer.start();
-					int newY = currentPosition.y + 1;
-					int newX = (newY - c) / gradient; // calculation base on line equation also
-					SetCursorPos(newX, newY);
-					currentPosition.y++;
-					distanceMoved++;
-					while (localTimer.getTimePast() < scaledDurationPerY) {}
-				} while (distanceMoved < totalDistanceY);
-			}
-			else {
-				do {
-					Timer localTimer = Timer();
-					localTimer.start();
-					int newY = currentPosition.y - 1;
-					int newX = (newY - c) / gradient;
-					SetCursorPos(newX, newY);
-					currentPosition.y--;
-					distanceMoved++;
-					while (localTimer.getTimePast() < scaledDurationPerY) {}
-				} while (distanceMoved < totalDistanceY);
-			}
-		}
-	}
-	else {
+	auto directionX = endScaledPoint.x - startScaledPoint.x;
+	auto directionY = endScaledPoint.y - startScaledPoint.y;
+	if (directionX == 0 && directionY == 0) {
+		Timer localTimer = Timer();
+		localTimer.start();
+		duration *= Timer::prefix;
+		while (localTimer.getTimePast() < duration) {}
 		SetCursorPos(endScaledPoint.x, endScaledPoint.y);
+		return;
+	}
+	auto distance = sqrt(directionX * directionX + directionY * directionY);
+	auto unitVectorX = directionX / distance;
+	auto unitVectorY = directionY / distance;
+	auto waitDuration = duration / (int)duration * Timer::prefix;
+	auto distancePerWaitDuration = distance / duration;
+	for (auto multiplier = distancePerWaitDuration; multiplier <= distance; multiplier += distancePerWaitDuration) {
+		Timer localTimer = Timer();
+		localTimer.start();
+		SetCursorPos(startScaledPoint.x + multiplier * unitVectorX, startScaledPoint.y + multiplier * unitVectorY);
+		while (localTimer.getTimePast() < waitDuration) {}
 	}
 }
 
