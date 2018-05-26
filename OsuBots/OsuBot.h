@@ -75,10 +75,12 @@ private:
 	// Gameplay related functions
 	void setCursorStartPoints();
 	POINT getScaledPoints(int x, int y);
+	void recalcSliderDuration(double &sliderDuration, unsigned int mod);
+	double getMoveToNextPointDuration(HitObject currentHitObject, HitObject nextHitObject, unsigned int mod, unsigned int divFactor);
+	double getSpinDuration(HitObject currentHitObject, unsigned int mod);
 
 	// Mods
-	// wrapper
-	void startMod(Beatmap beatmap, unsigned int bot, unsigned int mod);
+	void startMod(Beatmap beatmap, unsigned int bot, unsigned int mod); // wrapper
 	void modRelax(Beatmap beatmap, unsigned int mod);
 	void modAutoPilot(Beatmap beatmap, unsigned int mod); 
 	void modAuto(Beatmap beatmap, unsigned int mod);

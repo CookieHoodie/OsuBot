@@ -77,3 +77,9 @@ I'm not responsible for any ban for using this.
 If you find this useful, please support me to help me get a better laptop! It's a pain in the butt to program using this crappy laptop but I can't afford to buy one cuz I'm still a student...
 
 Support me on [![gogetfunding](https://gogetfunding.com/wp-content/themes/ggf/images/logo.png)](https://goget.fund/2KsnB8f)
+
+<!--
+gogetfunding change photo mention parents money
+add comments to new functions
+comments all old functions
+-->

@@ -41,4 +41,3 @@ int main() {
 	cout << "Please restart the program!" << endl; 
 	system("pause");
 }
-

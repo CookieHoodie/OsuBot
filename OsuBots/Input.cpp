@@ -142,9 +142,17 @@ void Input::circleLinearMove(POINT startScaledPoint, POINT endScaledPoint, doubl
 	auto distance = sqrt(directionX * directionX + directionY * directionY);
 	auto unitVectorX = directionX / distance;
 	auto unitVectorY = directionY / distance;
-	auto waitDuration = duration / (int)duration * Timer::prefix;
-	auto distancePerWaitDuration = distance / duration;
-	for (auto multiplier = distancePerWaitDuration; multiplier <= distance; multiplier += distancePerWaitDuration) {
+	double waitDuration;
+	double distancePerWaitDuration;
+	if (distance < duration) {
+		waitDuration = duration / distance * Timer::prefix;
+		distancePerWaitDuration = 1;
+	}
+	else {
+		waitDuration = duration / (int)duration * Timer::prefix;
+		distancePerWaitDuration = distance / duration;
+	}
+	for (double multiplier = 0; multiplier <= distance; multiplier += distancePerWaitDuration) {
 		Timer localTimer = Timer();
 		localTimer.start();
 		SetCursorPos(startScaledPoint.x + multiplier * unitVectorX, startScaledPoint.y + multiplier * unitVectorY);
@@ -188,13 +196,79 @@ POINT Input::spinnerMove(POINT scaledCenter, double duration) {
 	scaledEndPoint.y = y;
 	return scaledEndPoint; // return back scaled CursorEndPoint
 }
+//
+//POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, float pointsMultiplierY, POINT cursorStartPoints) {
+//	Timer globalTimer = Timer();
+//	globalTimer.start();
+//	auto scaledDuration = currentHitObject.sliderDuration * Timer::prefix; 
+//	bool reverse = false;
+//	FPointS unscaledEndPoint;
+//	// if 'L' type, pointsOnCurve is not set, so use circleLinearMove instead
+//	if (currentHitObject.sliderType == 'L') {
+//		CurvePointsS start = currentHitObject.CurvePoints.at(0).front();
+//		POINT startPoint;
+//		startPoint.x = start.x * pointsMultiplierX + cursorStartPoints.x;
+//		startPoint.y = start.y * pointsMultiplierY + cursorStartPoints.y;
+//		CurvePointsS end = currentHitObject.CurvePoints.at(0).back();
+//		POINT endPoint;
+//		endPoint.x = end.x * pointsMultiplierX + cursorStartPoints.x;
+//		endPoint.y = end.y * pointsMultiplierY + cursorStartPoints.y;
+//		for (int i = 0; i < currentHitObject.repeat; i++) {
+//			if (!reverse) {
+//				Input::circleLinearMove(startPoint, endPoint, currentHitObject.sliderDuration / currentHitObject.repeat);
+//				reverse = true;
+//			}
+//			else {
+//				Input::circleLinearMove(endPoint, startPoint, currentHitObject.sliderDuration / currentHitObject.repeat);
+//				reverse = false;
+//			}
+//		}
+//		if (currentHitObject.repeat % 2 == 1) {
+//			return endPoint;
+//		}
+//		else {
+//			return startPoint;
+//		}
+//	}
+//	else {
+//		auto scaledDurationPerDistance = (scaledDuration) / (currentHitObject.pointsOnCurve.size() * currentHitObject.repeat);
+//		for (int i = 0; i < currentHitObject.repeat; i++) {
+//			if (!reverse) {
+//				for (int j = 0; j < currentHitObject.pointsOnCurve.size() && globalTimer.getTimePast() <  scaledDuration; j++) {
+//					Timer localTimer = Timer();
+//					localTimer.start();
+//					FPointS point = currentHitObject.pointsOnCurve.at(j);
+//					int scaledX = point.x * pointsMultiplierX + cursorStartPoints.x;
+//					int scaledY = point.y * pointsMultiplierY + cursorStartPoints.y;
+//					SetCursorPos(scaledX, scaledY);
+//					while (localTimer.getTimePast() < scaledDurationPerDistance) {}
+//				}
+//				reverse = true;
+//				unscaledEndPoint = currentHitObject.pointsOnCurve.back();
+//			}
+//			else {
+//				for (int j = currentHitObject.pointsOnCurve.size(); j-- > 0 && globalTimer.getTimePast() <  scaledDuration;) {
+//					Timer localTimer = Timer();
+//					localTimer.start();
+//					FPointS currentPoint = currentHitObject.pointsOnCurve.at(j);
+//					int scaledX = currentPoint.x * pointsMultiplierX + cursorStartPoints.x;
+//					int scaledY = currentPoint.y * pointsMultiplierY + cursorStartPoints.y;
+//					SetCursorPos(scaledX, scaledY);
+//					while (localTimer.getTimePast() < scaledDurationPerDistance) {}
+//				}
+//				reverse = false;
+//				unscaledEndPoint = currentHitObject.pointsOnCurve.front();
+//			}
+//		}
+//	}
+//	POINT scaledEndPoint; // scale and return real end point
+//	scaledEndPoint.x = unscaledEndPoint.x * pointsMultiplierX + cursorStartPoints.x;
+//	scaledEndPoint.y = unscaledEndPoint.y * pointsMultiplierY + cursorStartPoints.y;
+//	return scaledEndPoint;
+//}
 
 POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, float pointsMultiplierY, POINT cursorStartPoints) {
-	Timer globalTimer = Timer();
-	globalTimer.start();
-	auto scaledDuration = currentHitObject.sliderDuration * Timer::prefix; 
 	bool reverse = false;
-	FPointS unscaledEndPoint;
 	// if 'L' type, pointsOnCurve is not set, so use circleLinearMove instead
 	if (currentHitObject.sliderType == 'L') {
 		CurvePointsS start = currentHitObject.CurvePoints.at(0).front();
@@ -223,38 +297,55 @@ POINT Input::sliderMove(HitObject currentHitObject, float pointsMultiplierX, flo
 		}
 	}
 	else {
-		auto scaledDurationPerDistance = (scaledDuration) / (currentHitObject.pointsOnCurve.size() * currentHitObject.repeat);
+		Timer globalTimer = Timer();
+		globalTimer.start();
+		double totalDuration = currentHitObject.sliderDuration * Timer::prefix;
+		double waitDuration;
+		double skippedIndex;
+		if (currentHitObject.pointsOnCurve.size() * currentHitObject.repeat < currentHitObject.sliderDuration) {
+			waitDuration = currentHitObject.sliderDuration / currentHitObject.pointsOnCurve.size() / currentHitObject.repeat * Timer::prefix;
+			skippedIndex = 1;
+		}
+		else {
+			waitDuration = currentHitObject.sliderDuration / (int)currentHitObject.sliderDuration * Timer::prefix;
+			skippedIndex = currentHitObject.pointsOnCurve.size() * currentHitObject.repeat / currentHitObject.sliderDuration ;
+		}
+		FPointS unscaledEndPoint;
+		int multiplier = 0;
 		for (int i = 0; i < currentHitObject.repeat; i++) {
 			if (!reverse) {
-				for (int j = 0; j < currentHitObject.pointsOnCurve.size() && globalTimer.getTimePast() <  scaledDuration; j++) {
+				for (int index = 0; index < currentHitObject.pointsOnCurve.size() && globalTimer.getTimePast() < totalDuration; index = multiplier * skippedIndex) {
 					Timer localTimer = Timer();
 					localTimer.start();
-					FPointS point = currentHitObject.pointsOnCurve.at(j);
+					FPointS point = currentHitObject.pointsOnCurve.at(index);
 					int scaledX = point.x * pointsMultiplierX + cursorStartPoints.x;
 					int scaledY = point.y * pointsMultiplierY + cursorStartPoints.y;
 					SetCursorPos(scaledX, scaledY);
-					while (localTimer.getTimePast() < scaledDurationPerDistance) {}
+					multiplier++;
+					while (localTimer.getTimePast() < waitDuration) {}
 				}
 				reverse = true;
 				unscaledEndPoint = currentHitObject.pointsOnCurve.back();
 			}
 			else {
-				for (int j = currentHitObject.pointsOnCurve.size(); j-- > 0 && globalTimer.getTimePast() <  scaledDuration;) {
+				multiplier--;
+				for (int index = multiplier; index >= 0 && globalTimer.getTimePast() < totalDuration; index = multiplier * skippedIndex) {
 					Timer localTimer = Timer();
 					localTimer.start();
-					FPointS currentPoint = currentHitObject.pointsOnCurve.at(j);
-					int scaledX = currentPoint.x * pointsMultiplierX + cursorStartPoints.x;
-					int scaledY = currentPoint.y * pointsMultiplierY + cursorStartPoints.y;
+					FPointS point = currentHitObject.pointsOnCurve.at(index);
+					int scaledX = point.x * pointsMultiplierX + cursorStartPoints.x;
+					int scaledY = point.y * pointsMultiplierY + cursorStartPoints.y;
 					SetCursorPos(scaledX, scaledY);
-					while (localTimer.getTimePast() < scaledDurationPerDistance) {}
+					multiplier--;
+					while (localTimer.getTimePast() < waitDuration) {}
 				}
 				reverse = false;
 				unscaledEndPoint = currentHitObject.pointsOnCurve.front();
 			}
 		}
+		POINT scaledEndPoint; // scale and return real end point
+		scaledEndPoint.x = unscaledEndPoint.x * pointsMultiplierX + cursorStartPoints.x;
+		scaledEndPoint.y = unscaledEndPoint.y * pointsMultiplierY + cursorStartPoints.y;
+		return scaledEndPoint;
 	}
-	POINT scaledEndPoint; // scale and return real end point
-	scaledEndPoint.x = unscaledEndPoint.x * pointsMultiplierX + cursorStartPoints.x;
-	scaledEndPoint.y = unscaledEndPoint.y * pointsMultiplierY + cursorStartPoints.y;
-	return scaledEndPoint;
 }
