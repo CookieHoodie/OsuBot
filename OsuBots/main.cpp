@@ -6,7 +6,6 @@
 
 using namespace std;
 
-
 int main() {
 	wchar_t* processName = L"osu!.exe";
 	

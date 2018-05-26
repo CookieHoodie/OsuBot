@@ -8,8 +8,7 @@
 
 #include "HitObject.h"
 #include "Timer.h"
-
-#include <iostream>
+#include "Config.h"
 
 using namespace std;
 

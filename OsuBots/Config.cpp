@@ -6,10 +6,12 @@ namespace Config
 	string OSUROOTPATH = "";
 	char LEFT_KEY = 'z';
 	char RIGHT_KEY = 'x';
-	int CLICKOFFSET = 0;
-	int SLIDERDURATIONOFFSET = 0;
+	int CLICK_OFFSET = 0;
+	int SLIDER_DURATION_OFFSET = 0;
+	unsigned int RPM = 400;
 	// rarely changed
-	unsigned int CIRCLESLEEPTIME = 10;
+	unsigned int CIRCLE_SLEEPTIME = 10;
+	unsigned int MIN_WAIT_DURATION = 1;
 
 	// Derived constants (not in file)
 	string SONGFOLDER = "";
@@ -35,14 +37,20 @@ void Config::loadConfigFile(string filename)
 			else if (constVector.front() == "RIGHT_KEY") {
 				Config::RIGHT_KEY = constVector.back().front();
 			}
-			else if (constVector.front() == "CLICKOFFSET") {
-				Config::CLICKOFFSET = stoi(constVector.back());
+			else if (constVector.front() == "CLICK_OFFSET") {
+				Config::CLICK_OFFSET = stoi(constVector.back());
 			}
-			else if (constVector.front() == "SLIDERDURATIONOFFSET") {
-				Config::SLIDERDURATIONOFFSET = stoi(constVector.back());
+			else if (constVector.front() == "SLIDER_DURATION_OFFSET") {
+				Config::SLIDER_DURATION_OFFSET = stoi(constVector.back());
 			}
-			else if (constVector.front() == "CIRCLESLEEPTIME") {
-				Config::CIRCLESLEEPTIME = stoi(constVector.back());
+			else if (constVector.front() == "RPM") {
+				Config::RPM = stoi(constVector.back());
+			}
+			else if (constVector.front() == "CIRCLE_SLEEPTIME") {
+				Config::CIRCLE_SLEEPTIME = stoi(constVector.back());
+			}
+			else if (constVector.front() == "MIN_WAIT_DURATION") {
+				Config::MIN_WAIT_DURATION = stoi(constVector.back());
 			}
 			
 		}
@@ -82,16 +90,16 @@ void Config::loadConfigFile(string filename)
 			configTxtWriter << "OSUROOTPATH=" << osuRootPath << endl;
 			configTxtWriter << "LEFT_KEY=" << leftKey << endl;
 			configTxtWriter << "RIGHT_KEY=" << rightKey << endl;
-			configTxtWriter << "CLICKOFFSET=" << Config::CLICKOFFSET << endl;
-			configTxtWriter << "SLIDERDURATIONOFFSET=" << Config::SLIDERDURATIONOFFSET << endl;
-			configTxtWriter << "CIRCLESLEEPTIME=" << Config::CIRCLESLEEPTIME << endl;
+			configTxtWriter << "CLICK_OFFSET=" << Config::CLICK_OFFSET << endl;
+			configTxtWriter << "SLIDER_DURATION_OFFSET=" << Config::SLIDER_DURATION_OFFSET << endl;
+			configTxtWriter << "RPM=" << Config::RPM << endl;
+			configTxtWriter << "CIRCLE_SLEEPTIME=" << Config::CIRCLE_SLEEPTIME << endl;
+			configTxtWriter << "MIN_WAIT_DURATION=" << Config::MIN_WAIT_DURATION << endl;
 			
-			cout << "If you wanna change the settings, delete the 'config.txt' created in the same directory with this program or manipulate the data inside manually." << endl;
 			configTxtWriter.close();
 
 			// call itself to read data this time
 			loadConfigFile(filename);
-			system("pause");
 		}
 		else {
 			throw runtime_error("Failed to create config.txt. Probably file permission issue");
@@ -121,9 +129,11 @@ void Config::changeConfig() {
 		cout << "0) Reset All" << endl;
 		cout << "1) LEFT_KEY (" << Config::LEFT_KEY << ")" << endl;
 		cout << "2) RIGHT_KEY (" << Config::RIGHT_KEY << ")" << endl;
-		cout << "3) CLICKOFFSET (" << Config::CLICKOFFSET << ")" << endl;
-		cout << "4) SLIDERDURATIONOFFSET (" << Config::SLIDERDURATIONOFFSET << ")" << endl;
-		cout << "5) CIRCLESLEEPTIME (" << Config::CIRCLESLEEPTIME << ")" << endl;
+		cout << "3) CLICK_OFFSET (" << Config::CLICK_OFFSET << ")" << endl;
+		cout << "4) SLIDER_DURATION_OFFSET (" << Config::SLIDER_DURATION_OFFSET << ")" << endl;
+		cout << "5) RPM (" << Config::RPM << ")" << endl;
+		cout << "6) CIRCLE_SLEEPTIME (" << Config::CIRCLE_SLEEPTIME << ")" << endl;
+		cout << "7) MIN_WAIT_DURATION (" << Config::MIN_WAIT_DURATION << ")" << endl;
 		
 		cin >> input;
 		// if y or n found, exit the loop
@@ -133,15 +143,17 @@ void Config::changeConfig() {
 		}
 		// var so that it can break out the outer loop
 		bool loopBreak = false;
-		while (!(all_of(input.begin(), input.end(), isdigit)) || stoi(input) < 0 || stoi(input) > 5) {
+		while (!(all_of(input.begin(), input.end(), isdigit)) || stoi(input) < 0 || stoi(input) > 7) {
 			cout << "Invalid input. Please enter again." << endl;
 			cout << "Make change to: (current value)" << endl;
-			cout << "0) Reset all to default values" << endl;
+			cout << "0) Reset All" << endl;
 			cout << "1) LEFT_KEY (" << Config::LEFT_KEY << ")" << endl;
 			cout << "2) RIGHT_KEY (" << Config::RIGHT_KEY << ")" << endl;
-			cout << "3) CLICKOFFSET (" << Config::CLICKOFFSET << ")" << endl;
-			cout << "4) SLIDERDURATIONOFFSET (" << Config::SLIDERDURATIONOFFSET << ")" << endl;
-			cout << "5) CIRCLESLEEPTIME (" << Config::CIRCLESLEEPTIME << ")" << endl;
+			cout << "3) CLICK_OFFSET (" << Config::CLICK_OFFSET << ")" << endl;
+			cout << "4) SLIDER_DURATION_OFFSET (" << Config::SLIDER_DURATION_OFFSET << ")" << endl;
+			cout << "5) RPM (" << Config::RPM << ")" << endl;
+			cout << "6) CIRCLE_SLEEPTIME (" << Config::CIRCLE_SLEEPTIME << ")" << endl;
+			cout << "7) MIN_WAIT_DURATION (" << Config::MIN_WAIT_DURATION << ")" << endl;
 			cin >> input;
 			if (input.front() == 'y' || input.front() == 'n') {
 				discard = input.front() == 'n' ? true : false;
@@ -192,7 +204,9 @@ void Config::changeConfig() {
 		}
 		case 3:
 		case 4:
-		case 5: {
+		case 5: 
+		case 6: 
+		case 7: {
 			string changeStr;
 			bool isNegative = false;
 			if (choice == 3) {
@@ -201,8 +215,14 @@ void Config::changeConfig() {
 			else if (choice == 4) {
 				cout << "Enter new SLIDERDURATIONOFFSET: (recommended 0+-20)" << endl;
 			}
-			else {
+			else if (choice == 5) {
+				cout << "Enter new RPM: (high value might cause lag)" << endl;
+			}
+			else if (choice == 6) {
 				cout << "Enter new CIRCLESLEEPTIME: (recommended 10+ (rarely changed))" << endl;
+			}
+			else {
+				cout << "Enter new MIN_WAIT_DURATION: (best using 1)" << endl;
 			}
 			cin >> changeStr;
 			// user might have input -ve value, which would fail the isdigit check, so check if it's -ve first
@@ -222,13 +242,19 @@ void Config::changeConfig() {
 					changeInt = -changeInt;
 				}
 				if (choice == 3) {
-					Config::CLICKOFFSET = changeInt;
+					Config::CLICK_OFFSET = changeInt;
 				}
 				else if (choice == 4) {
-					Config::SLIDERDURATIONOFFSET = changeInt;
+					Config::SLIDER_DURATION_OFFSET = changeInt;
+				}
+				else if (choice == 5) {
+					Config::RPM = changeInt;
+				}
+				else if (choice == 6) {
+					Config::CIRCLE_SLEEPTIME = changeInt;
 				}
 				else {
-					Config::CIRCLESLEEPTIME = changeInt;
+					Config::MIN_WAIT_DURATION = changeInt == 0 ? 1 : changeInt;
 				}
 			}
 			break;
@@ -246,9 +272,11 @@ void Config::changeConfig() {
 			configTxtWriter << "OSUROOTPATH=" << Config::OSUROOTPATH << endl;
 			configTxtWriter << "LEFT_KEY=" << Config::LEFT_KEY << endl;
 			configTxtWriter << "RIGHT_KEY=" << Config::RIGHT_KEY << endl;
-			configTxtWriter << "CLICKOFFSET=" << Config::CLICKOFFSET << endl;
-			configTxtWriter << "SLIDERDURATIONOFFSET=" << Config::SLIDERDURATIONOFFSET << endl;
-			configTxtWriter << "CIRCLESLEEPTIME=" << Config::CIRCLESLEEPTIME << endl;
+			configTxtWriter << "CLICK_OFFSET=" << Config::CLICK_OFFSET << endl;
+			configTxtWriter << "SLIDER_DURATION_OFFSET=" << Config::SLIDER_DURATION_OFFSET << endl;
+			configTxtWriter << "RPM=" << Config::RPM << endl;
+			configTxtWriter << "CIRCLE_SLEEPTIME=" << Config::CIRCLE_SLEEPTIME << endl;
+			configTxtWriter << "MIN_WAIT_DURATION=" << Config::MIN_WAIT_DURATION << endl;
 			configTxtWriter.close();
 		}
 		else {
@@ -264,8 +292,10 @@ void Config::changeConfig() {
 void Config::resetConfig() {
 	Config::LEFT_KEY = 'z';
 	Config::RIGHT_KEY = 'x';
-	Config::CLICKOFFSET = 0;
-	Config::SLIDERDURATIONOFFSET = 0;
+	Config::CLICK_OFFSET = 0;
+	Config::SLIDER_DURATION_OFFSET = 0;
+	Config::RPM = 400;
 	// rarely changed
-	Config::CIRCLESLEEPTIME = 10;
+	Config::CIRCLE_SLEEPTIME = 10;
+	Config::MIN_WAIT_DURATION = 1;
 }

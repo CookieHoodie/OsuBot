@@ -194,7 +194,7 @@ POINT OsuBot::getScaledPoints(int x, int y) {
 }
 
 void OsuBot::recalcSliderDuration(double &sliderDuration, unsigned int mod) {
-	sliderDuration += Config::SLIDERDURATIONOFFSET; // account for user defined offset
+	sliderDuration += Config::SLIDER_DURATION_OFFSET; // account for user defined offset
 	if (mod == 64 || mod == 80) {
 		sliderDuration /= 1.5;
 	}
@@ -249,6 +249,7 @@ double OsuBot::getSpinDuration(HitObject currentHitObject, unsigned int mod) {
 }
 
 // -------------------------------------------Mods-------------------------------------------------
+// wrapper function
 void OsuBot::startMod(Beatmap beatmap, unsigned int bot, unsigned int mod) {
 	switch (bot) {
 	case 1:
@@ -280,13 +281,13 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 			else if (GetAsyncKeyState(VK_SHIFT) & GetAsyncKeyState(0x43) & 0x8000 && (GetConsoleWindow() == GetForegroundWindow())) { // shift + c
 				Config::clearAndChangeConfig();
 			}
-			if (((this)->getCurrentAudioTime() > hitObject.time - beatmap.timeRange300 + Config::CLICKOFFSET)) {
+			if (((this)->getCurrentAudioTime() > hitObject.time - beatmap.timeRange300 + Config::CLICK_OFFSET)) {
 				break;
 			}
 		}
 		Timer localTimer = Timer();
 		if (hitObject.type == HitObject::TypeE::circle) {
-			auto circleSleepTime = Config::CIRCLESLEEPTIME * Timer::prefix;
+			auto circleSleepTime = Config::CIRCLE_SLEEPTIME * Timer::prefix;
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
 				localTimer.start();
@@ -408,7 +409,7 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 		POINT nextPoint = (this)->getScaledPoints(nextHitObject.x, nextHitObject.y);
 		// at this point, the cursor is already on the hitObject.
 		// so, to allow for longer range of hit time, wait until the time exceeds the time range of 300 points, then move
-		while ((this)->getCurrentAudioTime() < currentHitObject.time + beatmap.timeRange300 / 1.5 + Config::CLICKOFFSET) {
+		while ((this)->getCurrentAudioTime() < currentHitObject.time + beatmap.timeRange300 / 1.5 + Config::CLICK_OFFSET) {
 			if ((this)->isPlaying == false) {
 				exitSignal.set_value(); // signal thread to stop
 				setPointsOnCurveThread.join(); // join thread before returning (or else error)
@@ -458,7 +459,7 @@ void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) {
 
 	// play last hitObject as it is not played in the loop (if it's circle then it's already done)
 	HitObject lastHitObject = beatmap.HitObjects.back();
-	while ((this)->getCurrentAudioTime() < lastHitObject.time + beatmap.timeRange300 / 1.5 + Config::CLICKOFFSET) {
+	while ((this)->getCurrentAudioTime() < lastHitObject.time + beatmap.timeRange300 / 1.5 + Config::CLICK_OFFSET) {
 		if ((this)->isPlaying == false) {
 			exitSignal.set_value(); // signal thread to stop
 			setPointsOnCurveThread.join(); // join thread before returning (or else error)
@@ -541,7 +542,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 
 		// at this point, the cursor is already on the hitObject.
 		// If it is DT or HR DT, timeRange300 is used to offset the rapid speed which causes misses and 100s
-		auto setOffTime = currentHitObject.time + Config::CLICKOFFSET;
+		auto setOffTime = currentHitObject.time + Config::CLICK_OFFSET;
 		if (mod == 64 || mod == 80) {
 			setOffTime -= beatmap.timeRange300;
 		}
@@ -616,7 +617,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 			// sleep so that the key press is detected by the game client
 			// becuz if not sleep, pressing and releasing happen almost simultaneously and cannot be detected
 			// should be at least 10 millisecs 
-			auto circleSleepTime = Config::CIRCLESLEEPTIME * Timer::prefix;
+			auto circleSleepTime = Config::CIRCLE_SLEEPTIME * Timer::prefix;
 			Timer localTimer = Timer();
 			localTimer.start();
 			while (localTimer.getTimePast() < circleSleepTime) {}
@@ -635,7 +636,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 
 	// play last hitObject as it is not played in the loop (if it's circle then it's already done)
 	HitObject lastHitObject = beatmap.HitObjects.back();
-	auto setOffTime = lastHitObject.time + Config::CLICKOFFSET;
+	auto setOffTime = lastHitObject.time + Config::CLICK_OFFSET;
 	if (mod == 64 || mod == 80) {
 		setOffTime -= beatmap.timeRange300;
 	}
@@ -663,7 +664,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 	}
 	else { // account for circle.
 		Timer localTimer = Timer();
-		auto circleSleepTime = Config::CIRCLESLEEPTIME * Timer::prefix;
+		auto circleSleepTime = Config::CIRCLE_SLEEPTIME * Timer::prefix;
 		while (localTimer.getTimePast() < circleSleepTime) {}
 	}
 	
@@ -1171,6 +1172,3 @@ void OsuBot::start() {
 		}
 	}
 }
-
-// press shift + s to change setting
-// allow to change setting and reload in real time

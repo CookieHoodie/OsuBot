@@ -15,10 +15,12 @@ namespace Config
 	extern string OSUROOTPATH;
 	extern char LEFT_KEY;
 	extern char RIGHT_KEY;
-	extern int CLICKOFFSET;
+	extern int CLICK_OFFSET;
+	extern int SLIDER_DURATION_OFFSET;
+	extern unsigned int RPM;
 	// rarely changed
-	extern unsigned int CIRCLESLEEPTIME;
-	extern int SLIDERDURATIONOFFSET;
+	extern unsigned int CIRCLE_SLEEPTIME;
+	extern unsigned int MIN_WAIT_DURATION;
 
 	// not in file
 	extern string SONGFOLDER;

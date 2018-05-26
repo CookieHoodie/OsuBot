@@ -7,6 +7,7 @@ using namespace std;
 class Timer
 {
 private:
+	// all these typedefs are defined so that changes only need to be made here
 	typedef chrono::steady_clock ClockTypeT;
 	typedef nano PrefixT;
 	typedef double DurationRepT;
