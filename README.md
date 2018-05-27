@@ -13,6 +13,9 @@ Most of the codes come with comments, but feel free to ask me if you have any qu
 
 #### **This can only be run on windows platform, and is not supposed to be used in multiplayer. Restart is required if new beatmap is downloaded. 
 
+Click on the image below to watch the demo: 
+
+[![Osubot Auto demo](http://img.youtube.com/vi/fZAvsehGjHM/0.jpg)](http://www.youtube.com/watch?v=fZAvsehGjHM "OsuBot (CH) Auto mod demo")
 
 # Features
 Auto, Autopilot, and Relax with Nomod, HR only, DT only, or HR DT.
@@ -80,13 +83,17 @@ If you see error "invalid unordered_map<K, T> key" occuring, it indicates the be
 
 3) Start your osu! client and then start the OsuBot.
 
-4) Choose the bot you want (Auto/Autopilot/Relax).
+4) For first time run, you'll be prompted to initialize settings. Just follow the instructions appear.
 
-5) Choose the mod you want (HR/DT/HR DT).
+5) Choose the bot you want (Auto/Autopilot/Relax).
 
-6) Start a map while the screen is showing "Waiting for beatmap..." to start the bot.
+6) Choose the mod you want (HR/DT/HR DT).
 
-Extra: If you really decide to use this to cheat, change the Osubot.exe to another name to reduce the chance of getting detected.
+7) Start a map while the screen is showing "Waiting for beatmap..." to start the bot.
+
+8) If you wanna change the settings, press shift + c while the screen is showing "Waiting for beatmap" or while the map is playing.
+
+#### Extra: If you really decide to use this to cheat, change the exe to another name to reduce the chance of getting detected.
 
 
 # Tricks
