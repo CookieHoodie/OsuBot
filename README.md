@@ -62,7 +62,7 @@ If signature scanning take too long to finish (say more than 30s), you might nee
 
 
 # Debug
-If there's error showing '[NAME].dll is missing' during first launch, go to https://www.microsoft.com/en-my/download/details.aspx?id=48145 and download the x86 version (Visual c++ 2015 redistributable x86).
+If there's error showing "[NAME].dll is missing" during first launch, go to https://www.microsoft.com/en-my/download/details.aspx?id=48145 and download the x86 version (Visual c++ 2015 redistributable x86).
 
 If you messed up any settings, delete the config.txt created in the same directory with the OsuBot.exe and restart the bot. 
 
@@ -70,7 +70,7 @@ If you find the timing of the bots are not synced, try to go to settings (shift 
 
 If you find the cursor movement is obviously lagging behind, go to settings and increase the constant MIN_WAIT_DURATION by 1 each time until the bot is stable. It is not recommended to use value greater than 5 as the bot will start to behave a bit or totally off.
 
-If you see error 'invalid <T> ... unordered_map ...' occuring, it indicates the beatmap being played is either unranked (or loved) or super weird map. Playing new beatmaps which are downloaded after the osu! game client is launched WILL also cause this error. In this case, restart the osu! game client.
+If you see error "invalid unordered_map<K, T> key" occuring, it indicates the beatmap being played is either unranked (or loved) or super weird map. Playing new beatmaps which are downloaded after the osu! game client is launched WILL also cause this error. In this case, restart the osu! game client.
 
 
 # How to use
@@ -106,7 +106,7 @@ RPM - Determine the speed of spinning a spinner, which can be different on diffe
 
 CIRCLE_SLEEPTIME - A seldom changed value which can be experimented with if the timing is faulty (default is 10)
 
-*MIN_WAIT_DURATION - An IMPORTANT setting which deals with cursor lag. See Debug section for more details (Default is 1, which gives best performance(?)).
+*MIN_WAIT_DURATION - An IMPORTANT setting which deals with cursor lag. Basically smaller values give better aim but might cause lag. See Debug section for more details (Default is 1).
 
 
 # Disclaimer
