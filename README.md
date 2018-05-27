@@ -80,6 +80,12 @@ If you see error "invalid unordered_map<K, T> key" occuring, it indicates the be
 
 3) Start your osu! client and then start the OsuBot.
 
+4) Choose the bot you want (Auto/Autopilot/Relax).
+
+5) Choose the mod you want (HR/DT/HR DT).
+
+6) Start a map while the screen is showing "Waiting for beatmap..." to start the bot.
+
 Extra: If you really decide to use this to cheat, change the Osubot.exe to another name to reduce the chance of getting detected.
 
 
