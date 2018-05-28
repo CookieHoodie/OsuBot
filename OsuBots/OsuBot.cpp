@@ -5,9 +5,9 @@ const unsigned char OsuBot::TIME_SIG[] = { 0xDB, 0x5D, 0xE8, 0x8B, 0x45, 0xE8, 0
 const char* OsuBot::TIME_MASK = "xxxxxxx";
 const int OsuBot::TIME_SIG_OFFSET = 6 + 1; // + 1 goes to address that points to the currentAudioTime value
 
-const unsigned char OsuBot::PAUSE_SIGNAL_SIG[] = { 0x75, 0x26, 0xDD, 0x05 };
-const char* OsuBot::PAUSE_SIGNAL_MASK = "xxxx";
-const int OsuBot::PAUSE_SIGNAL_SIG_OFFSET = -5;
+//const unsigned char OsuBot::PAUSE_SIGNAL_SIG[] = { 0x75, 0x26, 0xDD, 0x05 };
+//const char* OsuBot::PAUSE_SIGNAL_MASK = "xxxx";
+//const int OsuBot::PAUSE_SIGNAL_SIG_OFFSET = -5;
 
 // -----------------------------------Constructor & Destructor---------------------------------------
 OsuBot::OsuBot(wchar_t* processName)
@@ -37,8 +37,8 @@ OsuBot::OsuBot(wchar_t* processName)
 		(this)->setCursorStartPoints();
 		cout << "Storing currentAudioTimeAddress... (This might take a while)" << endl;
 		(this)->currentAudioTimeAddress = (this)->getCurrentAudioTimeAddress();
-		cout << "Storing pauseSignalAddress..." << endl;
-		(this)->pauseSignalAddress = (this)->currentAudioTimeAddress + 0x24; // 0x24 is the offset to the pauseSignalAddress
+		//cout << "Storing pauseSignalAddress..." << endl;
+		//(this)->pauseSignalAddress = (this)->currentAudioTimeAddress + 0x24; // 0x24 is the offset to the pauseSignalAddress
 		cout << "Waiting osuDbThread to join..." << endl;
 		osuDbThread.join();
 		cout << "-----------------Initialization done!-----------------"  << endl;
@@ -96,12 +96,12 @@ int OsuBot::getCurrentAudioTime() {
 //	throw OsuBotException("Failed to get pause signal instruction address.");
 //}
 
-int OsuBot::getPauseSignal() {
-	// if failed to get data, return -1
-	int pauseSignal = -1;
-	ReadProcessMemory((this)->osuHandle, (LPCVOID)(this)->pauseSignalAddress, &pauseSignal, sizeof(int), nullptr);
-	return pauseSignal;
-}
+//int OsuBot::getPauseSignal() {
+//	// if failed to get data, return -1
+//	int pauseSignal = -1;
+//	ReadProcessMemory((this)->osuHandle, (LPCVOID)(this)->pauseSignalAddress, &pauseSignal, sizeof(int), nullptr);
+//	return pauseSignal;
+//}
 
 // -----------------------------------------Functions for threading-------------------------------------------
 void OsuBot::updateIsPlaying() {
@@ -193,8 +193,9 @@ POINT OsuBot::getScaledPoints(int x, int y) {
 	return p;
 }
 
-void OsuBot::recalcSliderDuration(double &sliderDuration, unsigned int mod) {
-	sliderDuration += Config::SLIDER_DURATION_OFFSET; // account for user defined offset
+void OsuBot::recalcSliderDuration(double &sliderDuration, unsigned int mod, double randomNum) {
+	// account for user defined offset and also offset for randomNum so as to not miss the sliderEnds
+	sliderDuration = sliderDuration + Config::SLIDER_DURATION_OFFSET - randomNum; 
 	if (mod == 64 || mod == 80) {
 		sliderDuration /= 1.5;
 	}
@@ -268,6 +269,8 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 	if ((this)->isPlaying == false) { return; }
 	bool leftKeysTurn = true;
 	for (auto hitObject : beatmap.HitObjects) {
+		// generate random number in each loop to give more realistic plays
+		double randomNum = Functions::randomNumGenerator(Config::CLICK_OFFSET_DEVIATION);
 		// loop for waiting till timing to press comes
 		while (true) {
 			// constantly check if the map is still being played
@@ -281,7 +284,7 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 			else if (GetAsyncKeyState(VK_SHIFT) & GetAsyncKeyState(0x43) & 0x8000 && (GetConsoleWindow() == GetForegroundWindow())) { // shift + c
 				Config::clearAndChangeConfig();
 			}
-			if (((this)->getCurrentAudioTime() > hitObject.time - beatmap.timeRange300 + Config::CLICK_OFFSET)) {
+			if (((this)->getCurrentAudioTime() > hitObject.time - beatmap.timeRange300 + Config::CLICK_OFFSET + randomNum)) {
 				break;
 			}
 		}
@@ -304,7 +307,7 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 			}
 		}
 		else if (hitObject.type == HitObject::TypeE::slider) {
-			(this)->recalcSliderDuration(hitObject.sliderDuration, mod);
+			(this)->recalcSliderDuration(hitObject.sliderDuration, mod, randomNum);
 			auto sliderSleepTime = hitObject.sliderDuration * Timer::prefix;
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
@@ -488,7 +491,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 	thread setPointsOnCurveThread(&OsuBot::recalcHitObjectsAndSetPointsOnCurve, this, ref(beatmap), mod, move(futureObj));
 	POINT center = (this)->getScaledPoints(256, 192); // 256, 192 is always the center of osu virtual screen
 	bool leftKeysTurn = true;
-
+	
 	// move to first hitObject when the beatmap starts
 	// "-300" and "250" are the preset adjustments as to when the cursor should move
 	HitObject firstHitObject = beatmap.HitObjects.front();
@@ -539,10 +542,11 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 		HitObject nextHitObject = beatmap.HitObjects.at(i);
 		POINT currentPoint = (this)->getScaledPoints(currentHitObject.x, currentHitObject.y);
 		POINT nextPoint = (this)->getScaledPoints(nextHitObject.x, nextHitObject.y);
+		double randomNum = Functions::randomNumGenerator(Config::CLICK_OFFSET_DEVIATION);
 
 		// at this point, the cursor is already on the hitObject.
 		// If it is DT or HR DT, timeRange300 is used to offset the rapid speed which causes misses and 100s
-		auto setOffTime = currentHitObject.time + Config::CLICK_OFFSET;
+		auto setOffTime = currentHitObject.time + Config::CLICK_OFFSET + randomNum;
 		if (mod == 64 || mod == 80) {
 			setOffTime -= beatmap.timeRange300;
 		}
@@ -583,7 +587,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 				// then rewrite currentHitObject to get the calculated points
 				currentHitObject = beatmap.HitObjects.at(i - 1);
 			}
-			(this)->recalcSliderDuration(currentHitObject.sliderDuration, mod);
+			(this)->recalcSliderDuration(currentHitObject.sliderDuration, mod, randomNum);
 			// move slider regardless of type and after reaching the slider end, move linearly to next hitObject
 			// the duration of moving linearly is divide by 2 to reduce latency and also improve readability
 			POINT endPoint = Input::sliderMove(currentHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
@@ -634,9 +638,10 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 		}
 	}
 
-	// play last hitObject as it is not played in the loop (if it's circle then it's already done)
+	// play last hitObject as it is not played in the loop 
 	HitObject lastHitObject = beatmap.HitObjects.back();
-	auto setOffTime = lastHitObject.time + Config::CLICK_OFFSET;
+	double randomNum = Functions::randomNumGenerator(Config::CLICK_OFFSET_DEVIATION);
+	auto setOffTime = lastHitObject.time + Config::CLICK_OFFSET + randomNum;
 	if (mod == 64 || mod == 80) {
 		setOffTime -= beatmap.timeRange300;
 	}
@@ -655,7 +660,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 	}
 
 	if (lastHitObject.type == HitObject::TypeE::slider) {
-		(this)->recalcSliderDuration(lastHitObject.sliderDuration, mod);
+		(this)->recalcSliderDuration(lastHitObject.sliderDuration, mod, randomNum);
 		Input::sliderMove(lastHitObject, (this)->pointsMultiplierX, (this)->pointsMultiplierY, (this)->cursorStartPoints);
 	}
 	else if (lastHitObject.type == HitObject::TypeE::spinner) {
@@ -664,6 +669,7 @@ void OsuBot::modAuto(Beatmap beatmap, unsigned int mod) {
 	}
 	else { // account for circle.
 		Timer localTimer = Timer();
+		localTimer.start();
 		auto circleSleepTime = Config::CIRCLE_SLEEPTIME * Timer::prefix;
 		while (localTimer.getTimePast() < circleSleepTime) {}
 	}

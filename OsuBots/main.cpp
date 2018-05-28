@@ -4,6 +4,9 @@
 #include "OsuBot.h"
 #include "Config.h"
 
+
+#include <random>
+
 using namespace std;
 
 int main() {

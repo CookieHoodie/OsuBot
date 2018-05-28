@@ -1,4 +1,6 @@
 # New updates
+New setting - CLICK_OFFSET_DEVIATION
+
 Now you can change the timing related offset to suit your gameplay in the settings screen.
 
 Stack circles problems are solved, only certain special cases (which are pretty unlikely to cause problem) are not accounted for.

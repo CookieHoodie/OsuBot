@@ -7,6 +7,7 @@ namespace Config
 	char LEFT_KEY = 'z';
 	char RIGHT_KEY = 'x';
 	int CLICK_OFFSET = 0;
+	unsigned int CLICK_OFFSET_DEVIATION = 0;
 	int SLIDER_DURATION_OFFSET = 0;
 	unsigned int RPM = 400;
 	// rarely changed
@@ -39,6 +40,9 @@ void Config::loadConfigFile(string filename)
 			}
 			else if (constVector.front() == "CLICK_OFFSET") {
 				Config::CLICK_OFFSET = stoi(constVector.back());
+			}
+			else if (constVector.front() == "CLICK_OFFSET_DEVIATION") {
+				Config::CLICK_OFFSET_DEVIATION = stoi(constVector.back());
 			}
 			else if (constVector.front() == "SLIDER_DURATION_OFFSET") {
 				Config::SLIDER_DURATION_OFFSET = stoi(constVector.back());
@@ -91,6 +95,7 @@ void Config::loadConfigFile(string filename)
 			configTxtWriter << "LEFT_KEY=" << leftKey << endl;
 			configTxtWriter << "RIGHT_KEY=" << rightKey << endl;
 			configTxtWriter << "CLICK_OFFSET=" << Config::CLICK_OFFSET << endl;
+			configTxtWriter << "CLICK_OFFSET_DEVIATION=" << Config::CLICK_OFFSET_DEVIATION << endl;
 			configTxtWriter << "SLIDER_DURATION_OFFSET=" << Config::SLIDER_DURATION_OFFSET << endl;
 			configTxtWriter << "RPM=" << Config::RPM << endl;
 			configTxtWriter << "CIRCLE_SLEEPTIME=" << Config::CIRCLE_SLEEPTIME << endl;
@@ -130,10 +135,11 @@ void Config::changeConfig() {
 		cout << "1) LEFT_KEY (" << Config::LEFT_KEY << ")" << endl;
 		cout << "2) RIGHT_KEY (" << Config::RIGHT_KEY << ")" << endl;
 		cout << "3) CLICK_OFFSET (" << Config::CLICK_OFFSET << ")" << endl;
-		cout << "4) SLIDER_DURATION_OFFSET (" << Config::SLIDER_DURATION_OFFSET << ")" << endl;
-		cout << "5) RPM (" << Config::RPM << ")" << endl;
-		cout << "6) CIRCLE_SLEEPTIME (" << Config::CIRCLE_SLEEPTIME << ")" << endl;
-		cout << "7) MIN_WAIT_DURATION (" << Config::MIN_WAIT_DURATION << ")" << endl;
+		cout << "4) CLICK_OFFSET_DEVIATION (" << Config::CLICK_OFFSET_DEVIATION << ")" << endl;
+		cout << "5) SLIDER_DURATION_OFFSET (" << Config::SLIDER_DURATION_OFFSET << ")" << endl;
+		cout << "6) RPM (" << Config::RPM << ")" << endl;
+		cout << "7) CIRCLE_SLEEPTIME (" << Config::CIRCLE_SLEEPTIME << ")" << endl;
+		cout << "8) MIN_WAIT_DURATION (" << Config::MIN_WAIT_DURATION << ")" << endl;
 		
 		cin >> input;
 		// if y or n found, exit the loop
@@ -143,17 +149,18 @@ void Config::changeConfig() {
 		}
 		// var so that it can break out the outer loop
 		bool loopBreak = false;
-		while (!(all_of(input.begin(), input.end(), isdigit)) || stoi(input) < 0 || stoi(input) > 7) {
+		while (!(all_of(input.begin(), input.end(), isdigit)) || stoi(input) < 0 || stoi(input) > 8) {
 			cout << "Invalid input. Please enter again." << endl;
 			cout << "Make change to: (current value)" << endl;
 			cout << "0) Reset All" << endl;
 			cout << "1) LEFT_KEY (" << Config::LEFT_KEY << ")" << endl;
 			cout << "2) RIGHT_KEY (" << Config::RIGHT_KEY << ")" << endl;
 			cout << "3) CLICK_OFFSET (" << Config::CLICK_OFFSET << ")" << endl;
-			cout << "4) SLIDER_DURATION_OFFSET (" << Config::SLIDER_DURATION_OFFSET << ")" << endl;
-			cout << "5) RPM (" << Config::RPM << ")" << endl;
-			cout << "6) CIRCLE_SLEEPTIME (" << Config::CIRCLE_SLEEPTIME << ")" << endl;
-			cout << "7) MIN_WAIT_DURATION (" << Config::MIN_WAIT_DURATION << ")" << endl;
+			cout << "4) CLICK_OFFSET_DEVIATION (" << Config::CLICK_OFFSET_DEVIATION << ")" << endl;
+			cout << "5) SLIDER_DURATION_OFFSET (" << Config::SLIDER_DURATION_OFFSET << ")" << endl;
+			cout << "6) RPM (" << Config::RPM << ")" << endl;
+			cout << "7) CIRCLE_SLEEPTIME (" << Config::CIRCLE_SLEEPTIME << ")" << endl;
+			cout << "8) MIN_WAIT_DURATION (" << Config::MIN_WAIT_DURATION << ")" << endl;
 			cin >> input;
 			if (input.front() == 'y' || input.front() == 'n') {
 				discard = input.front() == 'n' ? true : false;
@@ -206,20 +213,24 @@ void Config::changeConfig() {
 		case 4:
 		case 5: 
 		case 6: 
-		case 7: {
+		case 7: 
+		case 8: {
 			string changeStr;
 			bool isNegative = false;
 			if (choice == 3) {
-				cout << "Enter new CLICKOFFSET: (recommended 0+-30)" << endl;
+				cout << "Enter new CLICK_OFFSET: (recommended 0+-30)" << endl;
 			}
 			else if (choice == 4) {
-				cout << "Enter new SLIDERDURATIONOFFSET: (recommended 0+-20)" << endl;
+				cout << "Enter new CLICK_OFFSET_DEVIATION: " << endl;
 			}
 			else if (choice == 5) {
-				cout << "Enter new RPM: (high value might cause lag)" << endl;
+				cout << "Enter new SLIDER_DURATION_OFFSET: (recommended 0+-20)" << endl;
 			}
 			else if (choice == 6) {
-				cout << "Enter new CIRCLESLEEPTIME: (recommended 10+ (rarely changed))" << endl;
+				cout << "Enter new RPM: (high value might cause lag)" << endl;
+			}
+			else if (choice == 7) {
+				cout << "Enter new CIRCLE_SLEEPTIME: (recommended 10+ (rarely changed))" << endl;
 			}
 			else {
 				cout << "Enter new MIN_WAIT_DURATION: (best using 1)" << endl;
@@ -245,16 +256,19 @@ void Config::changeConfig() {
 					Config::CLICK_OFFSET = changeInt;
 				}
 				else if (choice == 4) {
-					Config::SLIDER_DURATION_OFFSET = changeInt;
+					Config::CLICK_OFFSET_DEVIATION = changeInt;
 				}
 				else if (choice == 5) {
-					Config::RPM = changeInt;
+					Config::SLIDER_DURATION_OFFSET = changeInt;
 				}
 				else if (choice == 6) {
+					Config::RPM = changeInt;
+				}
+				else if (choice == 7) {
 					Config::CIRCLE_SLEEPTIME = changeInt;
 				}
 				else {
-					Config::MIN_WAIT_DURATION = changeInt == 0 ? 1 : changeInt;
+					Config::MIN_WAIT_DURATION = changeInt;
 				}
 			}
 			break;
@@ -273,6 +287,7 @@ void Config::changeConfig() {
 			configTxtWriter << "LEFT_KEY=" << Config::LEFT_KEY << endl;
 			configTxtWriter << "RIGHT_KEY=" << Config::RIGHT_KEY << endl;
 			configTxtWriter << "CLICK_OFFSET=" << Config::CLICK_OFFSET << endl;
+			configTxtWriter << "CLICK_OFFSET_DEVIATION=" << Config::CLICK_OFFSET_DEVIATION << endl;
 			configTxtWriter << "SLIDER_DURATION_OFFSET=" << Config::SLIDER_DURATION_OFFSET << endl;
 			configTxtWriter << "RPM=" << Config::RPM << endl;
 			configTxtWriter << "CIRCLE_SLEEPTIME=" << Config::CIRCLE_SLEEPTIME << endl;
@@ -293,6 +308,7 @@ void Config::resetConfig() {
 	Config::LEFT_KEY = 'z';
 	Config::RIGHT_KEY = 'x';
 	Config::CLICK_OFFSET = 0;
+	Config::CLICK_OFFSET_DEVIATION = 0;
 	Config::SLIDER_DURATION_OFFSET = 0;
 	Config::RPM = 400;
 	// rarely changed

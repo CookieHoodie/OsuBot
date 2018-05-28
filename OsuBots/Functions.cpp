@@ -63,3 +63,13 @@ double Functions::binomialCoef(int n, int k) {
 	}
 	return r;
 }
+
+mt19937 Functions::generator = mt19937(random_device()());
+
+double Functions::randomNumGenerator(int variation) {
+	double randomNum = 0;
+	if (variation != 0) {
+		randomNum = uniform_real_distribution<>(-variation, variation)(Functions::generator);
+	}
+	return randomNum;
+}

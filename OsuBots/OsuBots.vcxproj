@@ -155,6 +155,7 @@
     <ClInclude Include="OsuBot.h" />
     <ClInclude Include="OsuDbParser.h" />
     <ClInclude Include="ProcessTools.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="SigScanner.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="TimingPoint.h" />
@@ -172,6 +173,14 @@
     <ClCompile Include="SigScanner.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="TimingPoint.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="OsuBots.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\..\Downloads\favicon-1024.png" />
+    <Image Include="..\..\..\..\..\Downloads\Osubot_icon.ico" />
+    <Image Include="icon1.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

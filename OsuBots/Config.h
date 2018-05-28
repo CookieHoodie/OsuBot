@@ -16,6 +16,7 @@ namespace Config
 	extern char LEFT_KEY;
 	extern char RIGHT_KEY;
 	extern int CLICK_OFFSET;
+	extern unsigned int CLICK_OFFSET_DEVIATION;
 	extern int SLIDER_DURATION_OFFSET;
 	extern unsigned int RPM;
 	// rarely changed
