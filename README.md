@@ -1,4 +1,6 @@
 # New updates
+## [2018/8/5] This project is not continued for some reasons.
+
 New setting - CLICK_OFFSET_DEVIATION
 
 #### Some important notes for users such as How to use, Known Issues, and Debug have been moved to the [User Documentation Wiki page](https://github.com/CookieHoodie/OsuBot/wiki/User-Documentation). Please read through the notes if you're using this bot!
@@ -69,6 +71,6 @@ I'm not responsible for any ban for using this.
 
 
 # Support
-If you find this useful, please support me to help me get a better laptop! It's a pain in the butt to programme using this crappy laptop but I can't afford to buy one cuz I'm still a student...
+If you find this useful, please support me to help me get a better laptop!
 
-### Support me on [![gogetfunding](https://gogetfunding.com/wp-content/themes/ggf/images/logo.png)](https://goget.fund/2KVjFNw)
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://paypal.me/CookieHoodie/0USD)
