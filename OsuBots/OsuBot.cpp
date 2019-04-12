@@ -266,9 +266,21 @@ void OsuBot::startMod(Beatmap beatmap, unsigned int bot, unsigned int mod) {
 }
 
 void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
+	//Initializing a double value with the name duration
+	double duration = 2;
+	//Initializing a double value with the name thresh. This will be used to calculate how big of a difference there needs to be before the bot starts switching keys
+	double thresh = 0.1;
+	int i = 0;
+	
+
 	if ((this)->isPlaying == false) { return; }
 	bool leftKeysTurn = true;
 	for (auto hitObject : beatmap.HitObjects) {
+
+		//Starts a timer that will time the time difference between each click
+		std::clock_t start;
+		
+		start = std::clock();
 		// generate random number in each loop to give more realistic plays
 		double randomNum = Functions::randomNumGenerator(Config::CLICK_OFFSET_DEVIATION);
 		// loop for waiting till timing to press comes
@@ -288,22 +300,49 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 				break;
 			}
 		}
+
+		//If the duration value is larger than the thresh, then it would just be clicking the left key
+		if (duration > thresh) {
+			leftKeysTurn = true;
+		}
+		else { //If the above argument is false, then it would start to switch keys.
+			if (leftKeysTurn) {
+				leftKeysTurn = false;
+			}
+			else {
+				leftKeysTurn = true;
+			}
+		}
+
+
 		Timer localTimer = Timer();
+		
 		if (hitObject.type == HitObject::TypeE::circle) {
+
 			auto circleSleepTime = Config::CIRCLE_SLEEPTIME * Timer::prefix;
+				if (leftKeysTurn) {
+					Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
+					localTimer.start();
+					while (localTimer.getTimePast() < circleSleepTime) {}
+					Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
+				}
+				else {
+					Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
+					localTimer.start();
+					while (localTimer.getTimePast() < circleSleepTime) {}
+					Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
+				}
 			if (leftKeysTurn) {
 				Input::sentKeyInput(Config::LEFT_KEY, true); // press left key
 				localTimer.start();
 				while (localTimer.getTimePast() < circleSleepTime) {}
 				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
-				leftKeysTurn = false;
 			}
 			else {
 				Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
 				localTimer.start();
 				while (localTimer.getTimePast() < circleSleepTime) {}
 				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
-				leftKeysTurn = true;
 			}
 		}
 		else if (hitObject.type == HitObject::TypeE::slider) {
@@ -314,14 +353,12 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 				localTimer.start();
 				while (localTimer.getTimePast() < sliderSleepTime) {}
 				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
-				leftKeysTurn = false;
 			}
 			else {
 				Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
 				localTimer.start();
 				while (localTimer.getTimePast() < sliderSleepTime) {}
 				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
-				leftKeysTurn = true;
 			}
 		}
 		else if (hitObject.type == HitObject::TypeE::spinner) {
@@ -332,22 +369,24 @@ void OsuBot::modRelax(Beatmap beatmap, unsigned int mod) {
 				localTimer.start();
 				while (localTimer.getTimePast() < spinDuration) {}
 				Input::sentKeyInput(Config::LEFT_KEY, false); // release left key
-				leftKeysTurn = false;
 			}
 			else {
 				Input::sentKeyInput(Config::RIGHT_KEY, true); // press right key
 				localTimer.start();
 				while (localTimer.getTimePast() < spinDuration) {}
 				Input::sentKeyInput(Config::RIGHT_KEY, false); // release right key
-				leftKeysTurn = true;
 			}
 		}
+		//Calculating the time differences
+		duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
+		
 	}
 
 	// release both key to prevent unwanted behaviour
 	Input::sentKeyInput(Config::LEFT_KEY, false);
 	Input::sentKeyInput(Config::RIGHT_KEY, false);
 }
+
 
 void OsuBot::modAutoPilot(Beatmap beatmap, unsigned int mod) { 
 	if ((this)->isPlaying == false) { return; }
