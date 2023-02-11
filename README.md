@@ -1,5 +1,5 @@
 # New updates
-## [2018/8/5] This project is not continued for some reasons.
+## [2018/8/5] This project is discontinued.
 
 New setting - CLICK_OFFSET_DEVIATION
 
